@@ -1,0 +1,8 @@
+{
+"name": "agent-framework",
+"description": "multi-agent orchestration, simplified.",
+"version": "1.0.0",
+"author": {
+"name": "Griffin Long"
+}
+}
