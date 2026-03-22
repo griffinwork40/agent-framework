@@ -54,6 +54,20 @@ Use it when:
 - you want to turn docs into a reusable agent capability
 - you want a repeatable bridge from API surface to agent workflow
 
+### Research
+Dispatches two sub-agents in parallel — one to search the web for external context, one to inspect the local codebase — then returns a merged research brief.
+
+Use it when:
+- you need both external and local context before starting a task
+- you want to understand how a codebase relates to external docs or standards
+
+### Spec
+Takes an idea and transforms it into a structured spec.
+
+Use it when:
+- you have a rough idea that needs structure before implementation
+- you want a clear spec to hand off to another skill like Parallelize
+
 ## Why This Exists
 
 Most prompt collections are either too generic, too narrow, or mostly reminders for things the agent can already do.
