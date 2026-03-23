@@ -4,13 +4,13 @@
         "name": "Griffin Long",
         "email": "griffin@graisol.com"
     },
-    "plugins" : [
+    "plugins": [
         {
             "name": "agent-workflow-amplifiers",
             "source": {
-        "source": "github",
-        "repo": "griffinwork40/agent-framework"
-      },
+                "source": "github",
+                "repo": "griffinwork40/agent-framework"
+            },
             "description": "A collection of skills for agentic workflows."
         }
     ]
