@@ -3,6 +3,11 @@
 "description": "multi-agent orchestration, simplified.",
 "version": "1.0.0",
 "author": {
-"name": "Griffin Long"
-}
+"name": "Griffin Long",
+"email": "griffin@graisol.com"
+},
+"homepage": "https://docs.example.com/plugin",
+  "repository": "https://github.com/author/plugin",
+  "license": "Apache-2.0",
+  "keywords": ["agent", "framework", "orchestration"]
 }
