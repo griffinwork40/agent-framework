@@ -1,0 +1,14 @@
+{
+    "name": "agent-framework",
+    "owner": {
+        "name": "Griffin Long",
+        "email": "griffin@graisol.com"
+    },
+    "plugins" : [
+        {
+            "name": "agent-workflow-amplifiers",
+            "source":"./plugins/agent-workflow-amplifiers",
+            "description": "A collection of skills for agentic workflows."
+        }
+    ]
+}
