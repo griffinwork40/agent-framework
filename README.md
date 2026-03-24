@@ -75,6 +75,39 @@ Most prompt collections are either too generic, too narrow, or mostly reminders 
 This repo focuses on a smaller and more useful category:
 reusable workflow transforms that create outsized value relative to their size.
 
+## Installation
+
+### From the marketplace
+
+1. Add the marketplace inside a Claude Code session:
+
+```
+/plugin marketplace add griffinwork40/agent-framework
+```
+
+2. Install the plugin:
+
+```
+/plugin install agent-workflow-amplifiers@griffinwork40-agent-framework
+```
+
+3. Reload to activate:
+
+```
+/reload-plugins
+```
+
+### Local installation
+
+Clone the repo and load it directly:
+
+```bash
+git clone https://github.com/griffinwork40/agent-framework.git
+claude --plugin-dir ./agent-framework
+```
+
+> Requires Claude Code v1.0.33 or later.
+
 ## Usage
 
 Use these skills when you want to shift the agent into a stronger operating mode with minimal prompt overhead.
