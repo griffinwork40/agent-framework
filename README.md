@@ -68,6 +68,13 @@ Use it when:
 - you have a rough idea that needs structure before implementation
 - you want a clear spec to hand off to another skill like Parallelize
 
+### Forge
+Autonomously grows the plugin by identifying gaps in workflow coverage, generating a new amplifier concept, creating the skill, and validating it through the Qualify gate — iterating until approved.
+
+Use it when:
+- you want to expand the plugin with a new high-leverage skill
+- you want to discover what workflow transformations are missing
+
 ## Why This Exists
 
 Most prompt collections are either too generic, too narrow, or mostly reminders for things the agent can already do.

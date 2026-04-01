@@ -9,5 +9,13 @@
 "homepage": "https://docs.example.com/plugin",
   "repository": "https://github.com/author/plugin",
   "license": "Apache-2.0",
-  "keywords": ["agent", "framework", "orchestration"]
+  "keywords": ["agent", "framework", "orchestration"],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "skills/cli-guard/scripts/hook.sh"
+      }
+    ]
+  }
 }
