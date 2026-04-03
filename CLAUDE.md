@@ -11,10 +11,15 @@ A Claude Code plugin (`agent-framework`) containing high-leverage skills that im
 ```
 .claude-plugin/plugin.json   # Plugin manifest (name, version, author)
 skills/
-  parallelize/SKILL.md       # Transforms a plan into parallel sub-agent waves
+  appmap/SKILL.md             # Map a web UI → create automation skill
+  forge/SKILL.md              # Autonomously grows the plugin with new amplifiers
   integrate/SKILL.md          # One-prompt API → CLI wrapper + skill + tests pipeline
+  parallelize/SKILL.md        # Transforms a plan into parallel sub-agent waves
+  qualify/SKILL.md             # Gate proposed skills — approve only force multipliers
   research/SKILL.md           # Parallel web + local codebase research brief
-  spec/SKILL.md               # Idea → structured spec (minimal, needs content)
+  resolve/SKILL.md            # Resolve PR code review feedback via parallel sub-agents
+  spec/SKILL.md               # Idea → structured spec
+  web/SKILL.md                # Parallel browser automation across independent tabs
 ```
 
 There are no build steps, tests, or dependencies. Each skill is a single `SKILL.md` with YAML frontmatter (`name`, `description`) and a markdown body containing the skill instructions.
@@ -31,6 +36,7 @@ There are no build steps, tests, or dependencies. Each skill is a single `SKILL.
 - `/integrate <API>` — pass an API name, docs URL, or description as the argument (`$ARGUMENT`)
 - `/research` — dispatches automatically based on task context
 - `/spec` — pass an idea to structure
+- `/forge` — autonomously identify gaps and create a new amplifier skill
 
 ## Adding a New Skill
 
