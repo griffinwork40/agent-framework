@@ -10,6 +10,14 @@ These skills are not meant to add net-new intelligence. They are meant to extrac
 
 The goal is simple: small prompts, disproportionate workflow improvement.
 
+## Why This Exists
+
+AI coding agents are good out of the box. They read files, write code, run tests. But left to their own defaults, they work linearly — one hypothesis at a time, one file at a time, one pass. The failure mode isn't stupidity. It's underutilization. The agent has sub-agent dispatch, parallel execution, isolated worktrees, web search, and browser automation available. It almost never uses them together without being told to.
+
+That's the gap this plugin fills. Each skill here is a small, structured prompt that changes the *shape* of how the agent works — not what it knows, but how it moves. Pre-flight recon before editing. Parallel research across web and codebase simultaneously. One-prompt API integrations that chain sub-agents through a full build pipeline. Friction detection that turns recurring pain into permanent solutions.
+
+The design constraint is intentional: high leverage per token. A skill that takes 200 tokens of prompt and saves 30 minutes of manual orchestration is worth keeping. A skill that reminds the agent to write tests is not. The `qualify` agent enforces this bar on every addition.
+
 ## Core Idea
 
 A good skill is not just a reminder. It should do one of three things:
