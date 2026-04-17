@@ -26,7 +26,26 @@ Present your findings to the user:
 
 1. **For each actionable theme**: summarize it in one line with the count, then quote 2-3 representative `friction_detail` examples. Ask: "Generate a skill for this? (y/n)"
 
-2. **If the user says yes**: Output a structured skill brief for the theme — a one-paragraph description of what the skill should do, the friction it addresses, and 2-3 representative examples. The user can then feed this into their own skill creation workflow.
+2. **If the user says yes**: Output a structured skill brief for the theme — a one-paragraph description of what the skill should do, the friction it addresses, and 2-3 representative examples. Also persist the brief to `~/.claude/agent-framework/briefs/<ISO8601-compact>-<theme-slug>.md` (e.g., `2026-04-17T14-30-05-wrong-approach-refactor.md`), creating the directory if needed. Use this format:
+
+   ```markdown
+   ---
+   theme: <one-line theme>
+   session_count: <int>
+   created_at: <ISO8601>
+   source: forge-friction
+   ---
+
+   <brief paragraph>
+
+   ## Friction examples
+
+   - <example 1>
+   - <example 2>
+   - <example 3>
+   ```
+
+   The user can feed the brief into their own skill creation workflow. Downstream tools in separate plugins (e.g., autonomous skill generators) can also consume the persisted briefs.
 
 3. **If the user says no**, skip it and move on.
 
