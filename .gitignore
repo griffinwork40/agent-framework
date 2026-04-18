@@ -1,0 +1,12 @@
+# IDE / editor
+.cursor/
+
+# In development
+cli-guard/
+
+# Python
+__pycache__/
+
+# Local dev logs (keep locally, don't ship)
+progress.md
+todo.md

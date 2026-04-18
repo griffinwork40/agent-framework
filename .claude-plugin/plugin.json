@@ -1,0 +1,12 @@
+{
+  "name": "agent-workflow-amplifiers",
+  "description": "multi-agent orchestration, simplified.",
+  "version": "1.3.0",
+  "author": {
+    "name": "Griffin Long",
+    "email": "support@graisol.com"
+  },
+  "repository": "https://github.com/griffinwork40/agent-framework",
+  "license": "Apache-2.0",
+  "keywords": ["agent", "framework", "orchestration"]
+}

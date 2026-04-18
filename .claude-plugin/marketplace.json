@@ -1,0 +1,20 @@
+{
+    "name": "agent-framework",
+    "metadata": {
+        "description": "High-leverage skills and agents for multi-agent orchestration, API integration, parallel execution, and one-shot task completion."
+    },
+    "owner": {
+        "name": "Griffin Long",
+        "email": "support@graisol.com"
+    },
+    "plugins": [
+        {
+            "name": "agent-workflow-amplifiers",
+            "source": {
+                "source": "github",
+                "repo": "griffinwork40/agent-framework"
+            },
+            "description": "multi-agent orchestration, simplified."
+        }
+    ]
+}
