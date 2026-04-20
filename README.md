@@ -1,4 +1,4 @@
-# Agent Workflow Amplifiers
+# Agent Workflow Amplifiers (AWAs)
 
 A Claude Code plugin of high-leverage skills that improve orchestration, integration, and one-shot task completion with minimal prompt overhead.
 
