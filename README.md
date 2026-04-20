@@ -86,6 +86,7 @@ Examples:
 - `/resolve` — resolve PR review feedback in parallel, one sub-agent per issue.
 - `/ground-state` — pre-flight recon before any non-trivial implementation.
 - `/qualify` — evaluate a proposed skill before adding it.
+- `/unqualify` — remove a qualified skill that has drifted and log the removal.
 
 ## Friction Detection
 
