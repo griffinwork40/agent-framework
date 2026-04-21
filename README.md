@@ -46,6 +46,7 @@ Every skill is a single `SKILL.md`. The `description` field controls when Claude
 | [`provideme`](skills/provideme/SKILL.md) | One-prompt provider bridge. Any coding agent CLI → local Anthropic-compatible API server (`POST /v1/messages`) with a `{provider}-claude` launcher. |
 | [`research`](skills/research/SKILL.md) | Dispatches two sub-agents in parallel — one to search the web, one to inspect the local codebase — and returns a merged research brief. |
 | [`resolve`](skills/resolve/SKILL.md) | Resolves PR code review feedback by dispatching one parallel sub-agent per issue. |
+| [`ship`](skills/ship/SKILL.md) | Release pipeline for already-done work: `/ground-state` pre-flight → tests → commit (user-approved) → push → PR with structured verification summary. `--verify` triggers an adversarial verifier wave on the diff. |
 | [`spec`](skills/spec/SKILL.md) | Transforms a loose idea into a structured, actionable spec ready for implementation. |
 | [`web`](skills/web/SKILL.md) | Orchestrates parallel browser automation across independent Chrome tabs, one sub-agent per tab. |
 
@@ -84,6 +85,7 @@ Examples:
 - `/research` — before starting a task, get web + codebase context in one shot.
 - `/spec "idea in one sentence"` — turn an idea into a scoped plan.
 - `/resolve` — resolve PR review feedback in parallel, one sub-agent per issue.
+- `/ship` — hand off already-done work: pre-flight, tests, commit, push, PR in one command.
 - `/ground-state` — pre-flight recon before any non-trivial implementation.
 - `/qualify` — evaluate a proposed skill before adding it.
 - `/unqualify` — remove a qualified skill that has drifted and log the removal.
