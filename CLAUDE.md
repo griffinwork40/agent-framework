@@ -10,12 +10,14 @@ A Claude Code plugin (`agent-workflow-amplifiers`) containing high-leverage skil
 
 ```
 .claude-plugin/
-  plugin.json                  # Plugin manifest (name, version, author, license)
+  plugin.json                  # Plugin manifest (name, version, author, license) — version auto-synced by release-please
   marketplace.json             # Marketplace listing
 agents/
   qualify.md                   # Gate-keeper agent: approves/rejects proposed skills
+  unqualify.md                 # Removal agent: dry-run plan → confirmed destruction, logged to the ledger
 commands/
   qualify.md                   # /qualify slash command — dispatches the qualify agent
+  unqualify.md                 # /unqualify slash command — dispatches the unqualify agent
 skills/
   agentify/SKILL.md            # Bootstraps sub-agent skills for each locally-installed coding agent CLI
   appmap/SKILL.md              # Map a web UI → create a Claude skill to automate it
@@ -27,6 +29,7 @@ skills/
   provideme/SKILL.md           # Any coding-agent CLI → local Anthropic-compatible /v1/messages bridge
   research/SKILL.md            # Parallel web + local codebase research brief
   resolve/SKILL.md             # Resolve PR code review feedback via parallel sub-agents
+  ship/SKILL.md                # Release pipeline: ground-state → tests → commit → push → PR (--verify adds adversarial wave)
   spec/SKILL.md                # Idea → structured spec
   web/SKILL.md                 # Parallel browser automation across independent Chrome tabs
 hooks/
@@ -36,7 +39,11 @@ scripts/
     analyzer.py                # Reads Claude Code native telemetry to surface friction patterns
 ```
 
-There are no build steps, tests, or dependencies. Each skill is a single `SKILL.md` with YAML frontmatter (`name`, `description`) and a markdown body. Agents live under `agents/` and follow the same frontmatter convention plus optional `model:` and `skills:` fields.
+There are no build steps, tests, or dependencies. Each skill is a single `SKILL.md` with YAML frontmatter (`name`, `description`, optional `argument-hint`) and a markdown body. Agents live under `agents/` and follow the same frontmatter convention plus optional `model:` and `skills:` fields.
+
+## Releases
+
+Versioning is automated by **release-please** (`.github/workflows/release-please.yml`). Use **Conventional Commits** (`feat:`, `fix:`, `chore:`, …) — merging them to `main` opens/updates a release PR that bumps `CHANGELOG.md` and syncs `$.version` in `.claude-plugin/plugin.json`. Do **not** hand-edit the version.
 
 ## Skill Design Principles
 
@@ -55,7 +62,9 @@ There are no build steps, tests, or dependencies. Each skill is a single `SKILL.
 - `/appmap <url>` — map a web UI and generate an automation skill
 - `/web` — parallel browser workflows across tabs
 - `/resolve` — resolve PR review feedback in parallel
+- `/ship` — hand off already-done work: pre-flight → tests → commit → push → PR
 - `/ground-state` — pre-flight recon before non-trivial implementations
+- `/unqualify <name> reason="..."` — remove a drifted skill (dry-run plan, then confirmed removal logged to the ledger)
 
 ## Adding a New Skill
 
