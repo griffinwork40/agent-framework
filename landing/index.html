@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Workflow Amplifiers — parallel dispatch for Claude Code</title>
+  <meta name="description" content="A Claude Code plugin of 13 high-leverage skills that turn one prompt into parallel sub-agent dispatch, cross-session friction detection, and one-shot pipeline completion.">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='6' cy='16' r='3' fill='%235e6ad2'/%3E%3Ccircle cx='26' cy='8' r='3' fill='%2302b8cc'/%3E%3Ccircle cx='26' cy='24' r='3' fill='%2302b8cc'/%3E%3Cpath d='M9 16 L23 8 M9 16 L23 24' stroke='%235e6ad2' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Agent Workflow Amplifiers">
+  <meta property="og:description" content="Small prompts. Disproportionate workflow improvement. 13 skills that give Claude Code parallel sub-agent dispatch.">
+  <meta property="og:image" content="https://griffinwork40.github.io/agent-framework/og-image.png">
+  <meta property="og:url" content="https://griffinwork40.github.io/agent-framework/">
+  <meta property="og:type" content="website">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Agent Workflow Amplifiers">
+  <meta name="twitter:description" content="Small prompts. Disproportionate workflow improvement. 13 skills that give Claude Code parallel sub-agent dispatch.">
+  <meta name="twitter:image" content="https://griffinwork40.github.io/agent-framework/og-image.png">
+
+  <style>
+    /* ====================================================================
+       Design tokens — palette grounded in Linear's production dark system.
+       Dispatch = indigo (#5e6ad2), Converge = cyan (#02b8cc).
+       ==================================================================== */
+    :root {
+      --bg:            #08090a;
+      --bg-alt:        #0b0c0e;
+      --surface:       #0f1011;
+      --surface-2:     #16171a;
+      --border:        rgba(255,255,255,0.07);
+      --border-strong: rgba(255,255,255,0.13);
+      --text:          #f7f8f8;
+      --muted:         #8a8f98;
+      --faint:         #8b94a3;   /* AA-safe on dark surfaces (>=4.5:1) */
+      --indigo:        #5e6ad2;
+      --indigo-lt:     #99a2f2;
+      --cyan:          #02b8cc;
+      --cyan-lt:       #4fdfec;
+      --green:         #4fd6a8;
+      --grad:          linear-gradient(120deg, #5e6ad2 0%, #02b8cc 100%);
+
+      --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                   "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Source Code Pro",
+                   Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+      --maxw: 1120px;
+      --radius: 14px;
+      --shadow-card:
+        rgba(255,255,255,0.06) 0 0 0 1px,
+        rgba(255,255,255,0.02) 0 1px 0 0 inset,
+        rgba(0,0,0,0.40) 0 8px 28px -12px;
+      --shadow-hover:
+        rgba(255,255,255,0.11) 0 0 0 1px,
+        rgba(255,255,255,0.04) 0 1px 0 0 inset,
+        rgba(0,0,0,0.55) 0 16px 44px -16px,
+        rgba(94,106,210,0.20) 0 0 36px -8px;
+
+      /* Signature field system — cool discovery → warm embodiment (RGB triples for rgba()). */
+      --field-cool: 94,106,210;   /* indigo — depth / discovery      */
+      --field-mid:  2,184,204;    /* cyan   — the earned route        */
+      --field-warm: 79,214,168;   /* mint   — embodiment / use        */
+      --signal-x: 27%;
+      --signal-y: 76%;
+    }
+
+    /* ============================ Reset ============================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+      letter-spacing: -0.011em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    a { color: var(--indigo-lt); text-decoration: none; transition: color 150ms ease; }
+    a:hover { color: var(--cyan-lt); }
+    code, pre, .mono { font-family: var(--font-mono); }
+    ::selection { background: rgba(94,106,210,0.35); color: #fff; }
+    :focus-visible { outline: 2px solid var(--indigo-lt); outline-offset: 2px; border-radius: 4px; }
+
+    .container { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    .grad-text {
+      background: var(--grad);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+
+    /* ============================ Backdrop ============================ */
+    .backdrop {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background-color: var(--bg);
+      background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 22px 22px;
+      -webkit-mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, #000 35%, transparent 100%);
+      mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, #000 35%, transparent 100%);
+    }
+    .backdrop::after {
+      content: ""; position: absolute; top: -180px; left: 50%;
+      width: 1100px; height: 620px; transform: translateX(-50%);
+      background:
+        radial-gradient(ellipse 50% 60% at 38% 30%, rgba(94,106,210,0.15), transparent 70%),
+        radial-gradient(ellipse 46% 56% at 70% 38%, rgba(2,184,204,0.09), transparent 72%);
+      filter: blur(8px);
+    }
+
+    /* ============================ Nav ============================ */
+    .nav {
+      position: sticky; top: 0; z-index: 100; height: 60px;
+      background: rgba(8,9,10,0.72);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav__inner { display: flex; align-items: center; justify-content: space-between; height: 100%; gap: 1rem; }
+    .nav__brand { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+    .nav__mark { flex: none; }
+    .nav__name {
+      font-family: var(--font-mono); font-size: 0.82rem; color: var(--text);
+      letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .nav__version {
+      font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 2px 7px; flex: none;
+    }
+    .nav__links { display: none; }
+    .nav__actions { display: flex; align-items: center; gap: 0.6rem; flex: none; }
+    .nav__star {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.83rem; color: var(--text);
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 9px; padding: 0.45rem 0.8rem;
+      transition: border-color 150ms ease, background 150ms ease;
+    }
+    .nav__star:hover { color: var(--text); border-color: var(--border-strong); background: #1c1d20; }
+    .nav__star svg { flex: none; }
+    .nav__star-count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+    .nav__star-count:empty { display: none; }
+    .nav__star-label { display: none; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      font-family: var(--font-sans); font-weight: 600; cursor: pointer;
+      border-radius: 9px; border: 1px solid transparent; transition: all 150ms ease;
+      text-decoration: none; white-space: nowrap;
+    }
+    .btn--primary {
+      color: #fff; background: var(--indigo);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset, 0 8px 28px -10px rgba(94,106,210,0.8);
+    }
+    .btn--primary:hover { color: #fff; background: #6b77e0; transform: translateY(-1px); }
+    .btn--sm { font-size: 0.83rem; padding: 0.45rem 1rem; }
+    .btn--lg { font-size: 1rem; padding: 0.85rem 1.6rem; }
+
+    /* ============================ Hero ============================ */
+    .hero { position: relative; padding: 4.5rem 0 5rem; }
+    .hero__grid { display: grid; grid-template-columns: 1fr; gap: 3rem; align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 0.55rem;
+      font-family: var(--font-mono); font-size: 0.7rem; color: var(--indigo-lt);
+      text-transform: uppercase; letter-spacing: 0.16em;
+      background: rgba(94,106,210,0.08); border: 1px solid rgba(94,106,210,0.22);
+      border-radius: 100px; padding: 0.3rem 0.85rem; margin-bottom: 1.6rem;
+    }
+    .eyebrow__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); flex: none; }
+    .hero__headline {
+      font-size: clamp(2.3rem, 7vw, 4.4rem); font-weight: 600;
+      line-height: 1.03; letter-spacing: -0.035em; margin-bottom: 1.4rem;
+      overflow-wrap: break-word; hyphens: auto;
+    }
+    .hero__headline .lead { color: var(--text); }
+    .hero__sub {
+      font-size: clamp(1.05rem, 1.6vw, 1.22rem); color: var(--muted);
+      line-height: 1.55; max-width: 32ch; margin-bottom: 0.95rem;
+    }
+    .hero__meta {
+      font-family: var(--font-mono); font-size: 0.76rem; color: var(--faint);
+      letter-spacing: 0; margin-bottom: 2rem;
+    }
+    .hero__ctas { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .hero__ghost { font-size: 0.92rem; color: var(--muted); display: inline-flex; align-items: center; gap: 0.4rem; }
+    .hero__ghost:hover { color: var(--text); }
+
+    /* ============================ Dispatch console ============================ */
+    .console {
+      background: linear-gradient(180deg, #131417 0%, var(--surface) 60%);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow-card); overflow: hidden;
+      font-family: var(--font-mono); font-size: 12.5px; line-height: 1.5;
+    }
+    .console__bar {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 0.95rem; background: rgba(255,255,255,0.025);
+      border-bottom: 1px solid var(--border);
+    }
+    .console__dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+    .console__dot--r { background: #ec6a5f; } .console__dot--y { background: #f4bf50; } .console__dot--g { background: #61c554; }
+    .console__title { margin-left: 0.5rem; color: var(--faint); font-size: 11px; letter-spacing: 0; }
+    .console__body { padding: 1.05rem 1.1rem 1.2rem; min-height: 300px; }
+    .console__prompt { color: var(--text); margin-bottom: 0.2rem; }
+    .console__prompt .sigil { color: var(--cyan); }
+    .console__prompt .cmd { color: var(--indigo-lt); }
+    .console__prompt .arg { color: var(--muted); }
+    .console__cmt { color: var(--faint); margin: 0.15rem 0; }
+    .console__cmt--right { text-align: center; margin-top: 0.35rem; }
+    .cursor {
+      display: inline-block; width: 7px; height: 1.05em; vertical-align: text-bottom;
+      background: var(--cyan); margin-left: 2px; animation: blink 1.05s steps(1) infinite;
+    }
+
+    .fork { display: block; width: 100%; height: 26px; }
+    .fork .rail { stroke: var(--border-strong); stroke-width: 1.4; fill: none; }
+    .fork .spark { stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-dasharray: 7 150; }
+    .fork .spark--i { stroke: var(--indigo); animation: dash 1.8s linear infinite; }
+    .fork .spark--c { stroke: var(--cyan); animation: dash 1.8s linear infinite; }
+
+    .lanes { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0.7rem; }
+    .lane {
+      background: rgba(255,255,255,0.022); border: 1px solid var(--border);
+      border-radius: 9px; padding: 0.6rem 0.7rem;
+    }
+    .lane__head { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); margin-bottom: 0.45rem; font-size: 11.5px; }
+    .lane__pin { width: 6px; height: 6px; border-radius: 50%; background: var(--indigo); box-shadow: 0 0 7px var(--indigo); flex: none; }
+    .lane__line { color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lane__line .ok { color: var(--cyan-lt); }
+    .lane__line.is-run { color: var(--muted); }
+
+    .merge { margin-top: 0.15rem; text-align: center; }
+    .merge__chip {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(2,184,204,0.07); border: 1px solid rgba(2,184,204,0.28);
+      border-radius: 8px; padding: 0.4rem 0.8rem; color: var(--text); font-size: 12px;
+    }
+    .merge__chip .diamond { color: var(--cyan); }
+    .merge__chip .meta { color: var(--muted); }
+
+    /* Animated reveal — stagger baked into keyframe %, all share one infinite cycle.
+       Every element resets to opacity:0 at 100% → stagger persists on every loop. */
+    .anim .a { opacity: 0; }
+    .anim .a1 { animation: a1 8.5s ease infinite; }
+    .anim .a2 { animation: a2 8.5s ease infinite; }
+    .anim .a3 { animation: a3 8.5s ease infinite; }
+    .anim .a4 { animation: a4 8.5s ease infinite; }
+    .anim .a5 { animation: a5 8.5s ease infinite; }
+    @keyframes a1 { 0%,2%{opacity:0;transform:translateY(3px)} 7%{opacity:1;transform:none} 88%{opacity:1} 93%{opacity:0} 100%{opacity:0} }
+    @keyframes a2 { 0%,17%{opacity:0;transform:translateY(3px)} 23%{opacity:1;transform:none} 88%{opacity:1} 93%{opacity:0} 100%{opacity:0} }
+    @keyframes a3 { 0%,32%{opacity:0} 38%{opacity:1} 88%{opacity:1} 93%{opacity:0} 100%{opacity:0} }
+    @keyframes a4 { 0%,49%{opacity:0} 55%{opacity:1} 88%{opacity:1} 93%{opacity:0} 100%{opacity:0} }
+    @keyframes a5 { 0%,67%{opacity:0;transform:translateY(3px)} 74%{opacity:1;transform:none} 88%{opacity:1} 93%{opacity:0} 100%{opacity:0} }
+    @keyframes blink { 0%{opacity:1} 50%{opacity:0} 100%{opacity:1} }
+    @keyframes dash { to { stroke-dashoffset: -157; } }
+
+    /* ============================ Sections ============================ */
+    .section { padding: 5rem 0; position: relative; }
+    .section--alt { background: var(--bg-alt); border-block: 1px solid var(--border); }
+    .label {
+      display: inline-flex; align-items: center; gap: 0.55rem;
+      font-family: var(--font-mono); font-size: 0.72rem; color: var(--cyan-lt);
+      text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem;
+    }
+    .label::before { content: ""; width: 22px; height: 1px; background: var(--grad); }
+    .section__title { font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.03em; }
+    .section__sub { color: var(--muted); font-size: 1.05rem; margin-top: 0.7rem; max-width: 52ch; }
+    .section__head--center { text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .section__head--center .section__sub { margin-inline: auto; }
+
+    /* How it works */
+    .steps { list-style: none; display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 2.5rem; }
+    .step {
+      position: relative; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow-card);
+    }
+    .step__n {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%; margin-bottom: 0.85rem;
+      font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: #fff; background: var(--grad);
+    }
+    .step__t { font-size: 1.08rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .step__d { color: var(--muted); font-size: 0.95rem; line-height: 1.55; }
+    .step__d code { font-family: var(--font-mono); font-size: 0.86em; color: var(--cyan-lt); background: var(--surface-2); padding: 1px 6px; border-radius: 5px; }
+
+    /* Problem */
+    .problem__list { display: grid; gap: 1.1rem; max-width: 760px; list-style: none; }
+    .problem__item {
+      position: relative; padding: 1.3rem 1.4rem 1.3rem 3.2rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      font-size: 1.08rem; color: var(--muted); box-shadow: var(--shadow-card);
+    }
+    .problem__item strong { color: var(--text); font-weight: 600; }
+    .problem__num {
+      position: absolute; left: 1.2rem; top: 1.3rem;
+      font-family: var(--font-mono); font-size: 0.8rem; color: var(--indigo-lt);
+    }
+
+    /* Skills grid */
+    .skills-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 1rem; margin-top: 2.5rem; }
+    .card {
+      position: relative; background: var(--surface); border-radius: var(--radius);
+      padding: 1.4rem 1.45rem; box-shadow: var(--shadow-card);
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+    .card--orch {
+      background:
+        linear-gradient(var(--surface), var(--surface)) padding-box,
+        var(--grad) border-box;
+      border: 1px solid transparent;
+    }
+    .card__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .card__cmd { font-family: var(--font-mono); font-size: 1.02rem; color: var(--text); font-weight: 500; }
+    .card--orch .card__cmd { color: var(--indigo-lt); }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.4rem; flex: none;
+      font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em;
+      color: var(--cyan-lt); background: rgba(2,184,204,0.08);
+      border: 1px solid rgba(2,184,204,0.22); border-radius: 100px; padding: 0.18rem 0.6rem;
+    }
+    .badge svg { flex: none; }
+    .card__desc { color: var(--muted); font-size: 0.96rem; line-height: 1.55; }
+    .card__hint { display: block; margin-top: 0.85rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--faint); }
+    .skills__more { text-align: center; margin-top: 1.7rem; font-family: var(--font-mono); font-size: 0.85rem; }
+    .skills__more a { color: var(--indigo-lt); }
+    .skills__more a:hover { color: var(--cyan-lt); }
+
+    /* Friction */
+    .friction__diagram { margin: 2.8rem auto 0; max-width: 760px; width: 100%; }
+    .friction-svg { width: 100%; height: auto; display: block; }
+    .fr-node-bg { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.5; }
+    .fr-node-tx { fill: var(--text); font-family: var(--font-mono); }
+    .fr-cap { fill: var(--faint); font-family: var(--font-sans); }
+    .fr-arrow { stroke: url(#frgrad); stroke-width: 2; fill: none; stroke-dasharray: 116; stroke-dashoffset: 116; }
+    .anim .fr-arrow.d1 { animation: draw 5s ease infinite; }
+    .anim .fr-arrow.d2 { animation: draw 5s ease infinite; }
+    .anim .fr-arrow.d3 { animation: draw 5s ease infinite; }
+    @keyframes draw { 0%{stroke-dashoffset:116} 18%{stroke-dashoffset:0} 84%{stroke-dashoffset:0} 92%{stroke-dashoffset:116} 100%{stroke-dashoffset:116} }
+    .anim .fr-arrow.d2 { animation-name: draw2; } .anim .fr-arrow.d3 { animation-name: draw3; }
+    @keyframes draw2 { 0%,18%{stroke-dashoffset:116} 38%{stroke-dashoffset:0} 84%{stroke-dashoffset:0} 92%{stroke-dashoffset:116} 100%{stroke-dashoffset:116} }
+    @keyframes draw3 { 0%,38%{stroke-dashoffset:116} 58%{stroke-dashoffset:0} 84%{stroke-dashoffset:0} 92%{stroke-dashoffset:116} 100%{stroke-dashoffset:116} }
+    .friction__privacy {
+      display: flex; align-items: flex-start; gap: 0.7rem; max-width: 640px; margin: 2.6rem auto 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1rem 1.2rem; color: var(--muted); font-size: 0.95rem; text-align: left;
+    }
+    .friction__privacy code { color: var(--cyan-lt); font-size: 0.88em; }
+    .friction__privacy strong { color: var(--text); font-weight: 600; }
+
+    /* Install */
+    .install__meta { display: flex; align-items: center; gap: 0.7rem; margin: 1.4rem 0 1.8rem; flex-wrap: wrap; }
+    .install__version {
+      font-family: var(--font-mono); font-size: 0.78rem; color: #fff;
+      background: var(--indigo); border-radius: 6px; padding: 0.2rem 0.6rem;
+    }
+    .install__req { font-size: 0.9rem; color: var(--faint); }
+    .install__blocks { display: grid; grid-template-columns: minmax(0,1fr); gap: 1.3rem; max-width: 760px; }
+    .block__label { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.55rem; }
+    .code {
+      position: relative; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--shadow-card); overflow: hidden; min-width: 0;
+    }
+    .code__bar { display: flex; gap: 0.4rem; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02); }
+    .code__bar span { width: 9px; height: 9px; border-radius: 50%; background: var(--surface-2); }
+    .code pre { padding: 1rem 1.1rem; overflow-x: auto; min-width: 0; }
+    .code pre:focus-visible { outline: 2px solid var(--indigo-lt); outline-offset: -2px; }
+    .code code { font-size: 0.86rem; line-height: 1.7; color: var(--text); }
+    .code .tok { color: var(--cyan-lt); }
+    .code .dim { color: var(--faint); }
+    .copy-btn {
+      position: absolute; top: 0.55rem; right: 0.6rem;
+      font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 7px;
+      padding: 0.3rem 0.65rem; cursor: pointer; transition: all 150ms ease;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--border-strong); }
+    .copy-btn.is-copied { color: var(--green); border-color: rgba(79,214,168,0.4); }
+
+    /* Final CTA */
+    .cta-final { background: var(--bg-alt); border-top: 1px solid var(--border); padding: 5rem 0; }
+    .cta-final__inner { text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .cta-final__sub { color: var(--muted); font-size: 1.05rem; margin: 0.8rem 0 2rem; }
+    .cta-final__ctas { justify-content: center; }
+
+    /* Toast */
+    .toast {
+      position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(12px);
+      display: flex; align-items: center; gap: 0.5rem; z-index: 200;
+      background: #16171a; border: 1px solid var(--border-strong); color: var(--text);
+      font-size: 0.9rem; padding: 0.7rem 1.1rem; border-radius: 10px;
+      box-shadow: 0 14px 34px -12px rgba(0,0,0,0.7);
+      opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast__check { color: var(--green); font-weight: 700; }
+
+    /* Footer */
+    .footer { border-top: 1px solid var(--border); padding: 2.5rem 0; }
+    .footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .footer__copy { color: var(--faint); font-size: 0.88rem; }
+    .footer__links { display: flex; gap: 1.4rem; }
+    .footer__links a { color: var(--muted); font-size: 0.88rem; }
+
+    /* ====================================================================
+       Signature field system — a small signal over hidden depth; many passes
+       compressed into one earned route; a rise into warm embodiment.
+       Reusable: .deep-field · .signal-field · .earned-path · .console-frame · .elevated-field
+       Governing law: cool indigo discovery (top) → warm mint use (bottom).
+       ==================================================================== */
+
+    /* Discovery zones — cooler, denser, inward. */
+    .deep-field { position: relative; isolation: isolate; }
+    .deep-field::before {
+      content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background: radial-gradient(120% 78% at 16% 116%, rgba(var(--field-cool),0.10), transparent 60%);
+    }
+
+    /* Embodiment zones — warmer, lighter, open: light rises from below. */
+    .elevated-field { position: relative; isolation: isolate; }
+    .elevated-field::before {
+      content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(95% 75% at 50% 130%, rgba(var(--field-warm),0.13), transparent 64%),
+        radial-gradient(72% 55% at 50% 116%, rgba(var(--field-mid),0.09), transparent 60%);
+    }
+
+    /* Signal field — a bright node above implied submerged structure (contour rings). */
+    .signal-field {
+      position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+      -webkit-mask-image: radial-gradient(125% 105% at var(--signal-x) var(--signal-y), #000 0%, transparent 70%);
+      mask-image: radial-gradient(125% 105% at var(--signal-x) var(--signal-y), #000 0%, transparent 70%);
+    }
+    .signal-field::before {
+      content: ""; position: absolute; inset: -25%;
+      background: repeating-radial-gradient(circle at var(--signal-x) var(--signal-y),
+        transparent 0 39px, rgba(var(--field-cool),0.06) 39px 40.5px);
+    }
+    .signal-field__node {
+      position: absolute; left: var(--signal-x); top: var(--signal-y);
+      width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(var(--field-mid),0.95), rgba(var(--field-cool),0.5) 60%, transparent 72%);
+      box-shadow: 0 0 22px 5px rgba(var(--field-cool),0.30);
+    }
+    .signal-field__ripple {
+      position: absolute; left: var(--signal-x); top: var(--signal-y);
+      width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%;
+      border: 1px solid rgba(var(--field-mid),0.45); opacity: 0;
+      animation: ripple 8s ease-out infinite;
+    }
+    .signal-field__ripple.r2 { animation-delay: 2.7s; }
+    .signal-field__ripple.r3 { animation-delay: 5.4s; }
+    @keyframes ripple { 0% { transform: scale(1); opacity: 0; } 9% { opacity: 0.5; } 100% { transform: scale(20); opacity: 0; } }
+
+    /* Console framed as an extracted instrument — crisp measure over the organic field. */
+    .console-frame { position: relative; }
+    .console-frame::before, .console-frame::after {
+      content: ""; position: absolute; width: 13px; height: 13px;
+      border: 0 solid var(--border-strong); pointer-events: none;
+    }
+    .console-frame::before { top: -6px; left: -6px; border-top-width: 1px; border-left-width: 1px; }
+    .console-frame::after  { bottom: -6px; right: -6px; border-bottom-width: 1px; border-right-width: 1px; }
+    .console__fig {
+      display: none; position: absolute; top: -1.4rem; left: 1px;
+      font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--faint);
+    }
+    .console__fig b { color: var(--muted); font-weight: 600; }
+
+    /* Earned path — repeated traces compressed into one confident route, crossed by a
+       measured depth threshold (cartographic cue, never captioned). Draws in on scroll. */
+    .earned-path {
+      position: relative; height: 92px; margin: 0 auto; max-width: var(--maxw); padding: 0 1.5rem;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent);
+    }
+    .earned-path svg { display: block; width: 100%; height: 100%; }
+    .earned-path .strand {
+      fill: none; stroke-width: 1.1; vector-effect: non-scaling-stroke; opacity: 0.4;
+      stroke-dasharray: 1200; stroke-dashoffset: 1200; transition: stroke-dashoffset 1.4s ease;
+    }
+    .earned-path .strand--main { stroke-width: 1.7; opacity: 0.9; }
+    .earned-path.is-revealed .strand { stroke-dashoffset: 0; }
+    .earned-path--diverge .strand { stroke: rgb(var(--field-cool)); }
+    .earned-path--compress .strand { stroke: rgb(var(--field-mid)); }
+    .earned-path--resolve  .strand { stroke: rgb(var(--field-mid)); }
+    .earned-path--resolve  .strand--main { stroke: rgb(var(--field-warm)); }
+    .earned-path .node { fill: rgb(var(--field-warm)); opacity: 0; transition: opacity 0.5s ease 0.9s; }
+    .earned-path.is-revealed .node { opacity: 0.9; }
+    .earned-path__mark {
+      position: absolute; top: 50%; left: 50%; transform: translate(-118%, -50%);
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em; color: var(--faint);
+    }
+    .earned-path__mark::after { content: ""; width: 16px; height: 1px; background: var(--border-strong); }
+
+    @media (min-width: 600px) { .console__fig { display: block; } }
+    @media (max-width: 599px) { .earned-path { height: 62px; } .earned-path__mark { display: none; } }
+
+    /* ============================ Responsive ============================ */
+    @media (min-width: 600px) {
+      .nav__star-label { display: inline; }
+      .skills-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+      .install__blocks { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+      .steps { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1.1rem; }
+    }
+    @media (min-width: 860px) {
+      .nav__links { display: flex; gap: 1.5rem; }
+      .nav__links a { font-size: 0.85rem; color: var(--muted); }
+      .nav__links a:hover { color: var(--text); }
+    }
+    @media (min-width: 960px) {
+      .hero { padding: 6rem 0 6.5rem; }
+      .hero__grid { grid-template-columns: minmax(0,1.04fr) minmax(0,0.96fr); gap: 3.5rem; }
+      .hero__sub { font-size: 1.25rem; }
+    }
+
+    /* ============================ Reduced motion ============================ */
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .anim .a, .anim .a1, .anim .a2, .anim .a3, .anim .a4, .anim .a5 { opacity: 1 !important; animation: none !important; transform: none !important; }
+      .fork .spark, .cursor, .fr-arrow { animation: none !important; }
+      .fr-arrow { stroke-dashoffset: 0 !important; }
+      .card:hover { transform: none; }
+      .toast { transition: opacity 1ms; }
+      .signal-field__ripple { display: none; }
+      .earned-path .strand { transition: none !important; stroke-dashoffset: 0 !important; }
+      .earned-path .node { transition: none !important; opacity: 0.9 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="backdrop" aria-hidden="true"></div>
+
+<!-- ===================== Nav ===================== -->
+<header class="nav">
+  <div class="container">
+    <div class="nav__inner">
+      <div class="nav__brand">
+        <svg class="nav__mark" width="24" height="24" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="6" cy="16" r="3" fill="#5e6ad2"/>
+          <circle cx="26" cy="8" r="3" fill="#02b8cc"/>
+          <circle cx="26" cy="24" r="3" fill="#02b8cc"/>
+          <path d="M9 16 L23 8 M9 16 L23 24" stroke="#5e6ad2" stroke-width="2" fill="none"/>
+        </svg>
+        <span class="nav__name">agent-workflow-amplifiers</span>
+        <span class="nav__version">v1.5.1</span>
+      </div>
+      <nav class="nav__links" aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#skills">Skills</a>
+        <a href="#install">Install</a>
+      </nav>
+      <nav class="nav__actions" aria-label="Primary">
+        <a href="https://github.com/griffinwork40/agent-framework" class="nav__star" target="_blank" rel="noopener noreferrer" aria-label="Star agent-framework on GitHub">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="#f4bf50"><path d="M8 .25l2.06 4.42 4.69.6-3.44 3.2.9 4.78L8 11.4 3.79 13.5l.9-4.78L1.25 5.27l4.69-.6z"/></svg>
+          <span class="nav__star-label">Star</span>
+          <span class="nav__star-count" id="star-count"></span>
+        </a>
+        <a href="#install" class="btn btn--primary btn--sm">Install</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ===================== Hero ===================== -->
+<section class="hero deep-field" aria-labelledby="hero-heading">
+  <div class="signal-field" aria-hidden="true">
+    <span class="signal-field__node"></span>
+    <span class="signal-field__ripple"></span>
+    <span class="signal-field__ripple r2"></span>
+    <span class="signal-field__ripple r3"></span>
+  </div>
+  <div class="container">
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <span class="eyebrow"><span class="eyebrow__dot" aria-hidden="true"></span>Parallel sub-agent dispatch · Claude Code plugin</span>
+        <h1 class="hero__headline" id="hero-heading">
+          <span class="lead">Small prompts.</span><br>
+          <span class="grad-text">Disproportionate</span> workflow improvement.
+        </h1>
+        <p class="hero__sub">Claude Code works one step at a time. This plugin turns a single prompt into parallel sub-agents — and converges the results for you.</p>
+        <p class="hero__meta">Free · Apache-2.0 · works with Claude Code v1.0.33+ · ~30-second install</p>
+        <div class="hero__ctas">
+          <a href="#install" class="btn btn--primary btn--lg" data-copy-install>Copy install command →</a>
+          <a class="hero__ghost" href="https://github.com/griffinwork40/agent-framework" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+        </div>
+      </div>
+
+      <!-- Dispatch console: one prompt → two agents in parallel → converged brief.
+           Framed as an extracted instrument (corner brackets + fig label) — the page's
+           clearest signal-over-depth signature: a small command, vast work beneath it. -->
+      <div class="console-frame">
+        <span class="console__fig" aria-hidden="true"><b>fig.01</b> — parallel dispatch</span>
+        <div class="console anim" role="img" aria-label="Illustrative demo of the /research skill: one prompt fans out into a web sub-agent and a local sub-agent running in parallel, which converge into a single merged brief.">
+        <div class="console__bar" aria-hidden="true">
+          <span class="console__dot console__dot--r"></span>
+          <span class="console__dot console__dot--y"></span>
+          <span class="console__dot console__dot--g"></span>
+          <span class="console__title">claude — agent-workflow-amplifiers</span>
+        </div>
+        <div class="console__body" aria-hidden="true">
+          <div class="console__prompt a a1"><span class="sigil">&gt;</span> <span class="cmd">/research</span> <span class="arg">"stripe webhook retry behavior"</span><span class="cursor"></span></div>
+          <div class="console__cmt a a2"># one prompt → two sub-agents, dispatched in parallel</div>
+
+          <svg class="fork a a2" viewBox="0 0 100 26" preserveAspectRatio="none" aria-hidden="true">
+            <path class="rail" d="M50 0 V8 M50 8 C50 18 25 16 25 26 M50 8 C50 18 75 16 75 26" vector-effect="non-scaling-stroke"/>
+            <path class="spark spark--i" d="M50 8 C50 18 25 16 25 26" vector-effect="non-scaling-stroke"/>
+            <path class="spark spark--i" d="M50 8 C50 18 75 16 75 26" vector-effect="non-scaling-stroke"/>
+          </svg>
+
+          <div class="lanes">
+            <div class="lane">
+              <div class="lane__head a a2"><span class="lane__pin"></span>web-agent</div>
+              <div class="lane__line is-run a a3">◍ searching the web…</div>
+              <div class="lane__line a a4"><span class="ok">✓</span> 3 patterns found</div>
+            </div>
+            <div class="lane">
+              <div class="lane__head a a2"><span class="lane__pin"></span>local-agent</div>
+              <div class="lane__line is-run a a3">◍ scanning src/billing/</div>
+              <div class="lane__line a a4"><span class="ok">✓</span> RetryPolicy at retry.ts:44</div>
+            </div>
+          </div>
+
+          <svg class="fork a a5" viewBox="0 0 100 24" preserveAspectRatio="none" aria-hidden="true">
+            <path class="rail" d="M25 0 C25 10 50 8 50 16 M75 0 C75 10 50 8 50 16 M50 16 V24" vector-effect="non-scaling-stroke"/>
+            <path class="spark spark--c" d="M25 0 C25 10 50 8 50 16" vector-effect="non-scaling-stroke"/>
+            <path class="spark spark--c" d="M75 0 C75 10 50 8 50 16" vector-effect="non-scaling-stroke"/>
+          </svg>
+
+          <div class="merge a a5">
+            <span class="merge__chip"><span class="diamond">◆</span> merged brief <span class="meta">· 0 conflicts · 1 risk flagged</span></span>
+          </div>
+          <div class="console__cmt console__cmt--right a a5">↑ illustrative output · results converged</div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- earned-path :: descent into discovery — one signal fans into many local passes -->
+<div class="earned-path earned-path--diverge" aria-hidden="true" data-reveal>
+  <svg viewBox="0 0 1000 92" preserveAspectRatio="none">
+    <path class="strand" d="M500 0 C500 38 180 48 180 92"/>
+    <path class="strand" d="M500 0 C500 42 360 50 360 92"/>
+    <path class="strand strand--main" d="M500 0 C500 30 500 60 500 92"/>
+    <path class="strand" d="M500 0 C500 42 640 50 640 92"/>
+    <path class="strand" d="M500 0 C500 38 820 48 820 92"/>
+  </svg>
+  <span class="earned-path__mark">▽ 040</span>
+</div>
+
+<!-- ===================== Problem ===================== -->
+<section class="section section--alt deep-field" aria-labelledby="problem-heading">
+  <div class="container">
+    <span class="label">The default</span>
+    <h2 class="section__title" id="problem-heading">A capable agent, working with one hand.</h2>
+    <ul class="problem__list">
+      <li class="problem__item"><span class="problem__num" aria-hidden="true">01</span><strong>Claude Code works one hypothesis at a time.</strong> Sub-agents exist — they're just not invoked.</li>
+      <li class="problem__item"><span class="problem__num" aria-hidden="true">02</span><strong>Parallel dispatch needs an explicit prompt, every time.</strong> The structure lives in your head, not the tool.</li>
+      <li class="problem__item"><span class="problem__num" aria-hidden="true">03</span><strong>Recurring friction vanishes between sessions.</strong> Nothing watches for the patterns worth fixing.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== How it works ===================== -->
+<section class="section" id="how" aria-labelledby="how-heading">
+  <div class="container">
+    <div class="section__head--center">
+      <span class="label">How it works</span>
+      <h2 class="section__title" id="how-heading">Install once. Then just type a slash command.</h2>
+    </div>
+    <ol class="steps">
+      <li class="step">
+        <span class="step__n" aria-hidden="true">1</span>
+        <h3 class="step__t">Install</h3>
+        <p class="step__d">Add the plugin from the marketplace — or clone it locally. One command, about thirty seconds.</p>
+      </li>
+      <li class="step">
+        <span class="step__n" aria-hidden="true">2</span>
+        <h3 class="step__t">Invoke</h3>
+        <p class="step__d">Type a skill like <code>/research</code> or <code>/integrate</code> inside Claude Code, as you would any command.</p>
+      </li>
+      <li class="step">
+        <span class="step__n" aria-hidden="true">3</span>
+        <h3 class="step__t">Amplify</h3>
+        <p class="step__d">Claude fans out into parallel sub-agents and converges their work into one result — no extra prompting.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===================== Skills ===================== -->
+<section class="section" id="skills" aria-labelledby="skills-heading">
+  <div class="container">
+    <div class="section__head--center">
+      <span class="label">The skills</span>
+      <h2 class="section__title" id="skills-heading">13 skills that change how the agent moves.</h2>
+      <p class="section__sub">Eight of the thirteen, featured here. Each is a compact prompt that reshapes the workflow — adding parallelism, phases, and sub-agent dispatch. Not what the agent knows; how it works.</p>
+    </div>
+
+    <div class="skills-grid">
+      <article class="card card--orch" aria-labelledby="s-research">
+        <div class="card__head">
+          <span class="card__cmd" id="s-research">/research</span>
+          <span class="badge"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="2" cy="6" r="1.6" fill="currentColor"/><circle cx="10" cy="2.5" r="1.6" fill="currentColor"/><circle cx="10" cy="9.5" r="1.6" fill="currentColor"/><path d="M3.4 6 8.6 2.8 M3.4 6 8.6 9.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>parallel</span>
+        </div>
+        <p class="card__desc">Two sub-agents in parallel — one on the web, one in your codebase — merged into a single brief.</p>
+        <span class="card__hint">orchestrator · web + codebase recon</span>
+      </article>
+
+      <article class="card card--orch" aria-labelledby="s-integrate">
+        <div class="card__head">
+          <span class="card__cmd" id="s-integrate">/integrate</span>
+          <span class="badge"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="2" cy="6" r="1.6" fill="currentColor"/><circle cx="10" cy="2.5" r="1.6" fill="currentColor"/><circle cx="10" cy="9.5" r="1.6" fill="currentColor"/><path d="M3.4 6 8.6 2.8 M3.4 6 8.6 9.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>parallel</span>
+        </div>
+        <p class="card__desc">Any API → a working CLI wrapper, a skill, and tests. One prompt, full pipeline.</p>
+        <span class="card__hint">orchestrator · full build pipeline</span>
+      </article>
+
+      <article class="card card--orch" aria-labelledby="s-resolve">
+        <div class="card__head">
+          <span class="card__cmd" id="s-resolve">/resolve</span>
+          <span class="badge"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="2" cy="6" r="1.6" fill="currentColor"/><circle cx="10" cy="2.5" r="1.6" fill="currentColor"/><circle cx="10" cy="9.5" r="1.6" fill="currentColor"/><path d="M3.4 6 8.6 2.8 M3.4 6 8.6 9.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>parallel</span>
+        </div>
+        <p class="card__desc">Resolves PR review feedback with one sub-agent per issue, then applies the fixes in order.</p>
+        <span class="card__hint">orchestrator · PR review</span>
+      </article>
+
+      <article class="card card--orch" aria-labelledby="s-spec">
+        <div class="card__head">
+          <span class="card__cmd" id="s-spec">/spec</span>
+          <span class="badge"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="2" cy="6" r="1.6" fill="currentColor"/><circle cx="10" cy="2.5" r="1.6" fill="currentColor"/><circle cx="10" cy="9.5" r="1.6" fill="currentColor"/><path d="M3.4 6 8.6 2.8 M3.4 6 8.6 9.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>parallel</span>
+        </div>
+        <p class="card__desc">Parallel web + local research, synthesized into a scoped, build-ready spec.</p>
+        <span class="card__hint">orchestrator · spec generation</span>
+      </article>
+
+      <article class="card" aria-labelledby="s-ground">
+        <div class="card__head">
+          <span class="card__cmd" id="s-ground">/ground-state</span>
+          <span class="badge"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="2" cy="6" r="1.6" fill="currentColor"/><circle cx="10" cy="2.5" r="1.6" fill="currentColor"/><circle cx="10" cy="9.5" r="1.6" fill="currentColor"/><path d="M3.4 6 8.6 2.8 M3.4 6 8.6 9.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>parallel</span>
+        </div>
+        <p class="card__desc">Parallel pre-flight recon — git, infrastructure, and memory — in a tight five-line snapshot.</p>
+        <span class="card__hint">read-only recon · session start</span>
+      </article>
+
+      <article class="card" aria-labelledby="s-ship">
+        <div class="card__head">
+          <span class="card__cmd" id="s-ship">/ship</span>
+          <span class="badge"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="2" cy="6" r="1.6" fill="currentColor"/><circle cx="10" cy="2.5" r="1.6" fill="currentColor"/><circle cx="10" cy="9.5" r="1.6" fill="currentColor"/><path d="M3.4 6 8.6 2.8 M3.4 6 8.6 9.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>--verify</span>
+        </div>
+        <p class="card__desc">Pre-flight → tests → commit → push → PR, with an optional adversarial verifier wave on the diff.</p>
+        <span class="card__hint">pipeline · git + PR</span>
+      </article>
+
+      <article class="card" aria-labelledby="s-friction">
+        <div class="card__head">
+          <span class="card__cmd" id="s-friction">/forge-friction</span>
+        </div>
+        <p class="card__desc">Reads Claude's native telemetry across sessions and surfaces the recurring friction worth a new skill.</p>
+        <span class="card__hint">telemetry · cross-session analysis</span>
+      </article>
+
+      <article class="card" aria-labelledby="s-agentify">
+        <div class="card__head">
+          <span class="card__cmd" id="s-agentify">/agentify</span>
+          <span class="badge"><svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="2" cy="6" r="1.6" fill="currentColor"/><circle cx="10" cy="2.5" r="1.6" fill="currentColor"/><circle cx="10" cy="9.5" r="1.6" fill="currentColor"/><path d="M3.4 6 8.6 2.8 M3.4 6 8.6 9.2" stroke="currentColor" stroke-width="1" fill="none"/></svg>parallel</span>
+        </div>
+        <p class="card__desc">Bootstraps a dispatchable sub-agent skill for every coding CLI installed on your machine.</p>
+        <span class="card__hint">scaffolding · skill generation</span>
+      </article>
+    </div>
+
+    <p class="skills__more">
+      <a href="https://github.com/griffinwork40/agent-framework#readme" target="_blank" rel="noopener noreferrer">See all 13 skills in the README →</a>
+    </p>
+  </div>
+</section>
+
+<!-- earned-path :: compression at depth — repeated passes braid toward one route -->
+<div class="earned-path earned-path--compress" aria-hidden="true" data-reveal>
+  <svg viewBox="0 0 1000 92" preserveAspectRatio="none">
+    <path class="strand" d="M300 0 C300 48 440 44 440 92"/>
+    <path class="strand" d="M700 0 C700 48 560 44 560 92"/>
+    <path class="strand" d="M460 0 C460 50 560 50 560 92"/>
+    <path class="strand" d="M540 0 C540 50 440 50 440 92"/>
+  </svg>
+  <span class="earned-path__mark">▽ 120</span>
+</div>
+
+<!-- ===================== Friction / telemetry ===================== -->
+<section class="section section--alt deep-field" id="friction" aria-labelledby="friction-heading">
+  <div class="container">
+    <div class="section__head--center">
+      <span class="label">Telemetry</span>
+      <h2 class="section__title" id="friction-heading">It learns from how you work.</h2>
+      <p class="section__sub">Every session leaves a trail. The plugin reads it, finds the patterns that keep costing you, and proposes the skill that would end them.</p>
+    </div>
+
+    <div class="friction__diagram" role="img" aria-label="Pipeline: Claude's native hooks feed analyzer.py for pattern classification, then a 28-day aggregation window, then /forge-friction surfaces patterns that recur across three or more sessions.">
+      <svg class="friction-svg anim" viewBox="0 0 720 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="frgrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#5e6ad2"/><stop offset="1" stop-color="#02b8cc"/>
+          </linearGradient>
+          <marker id="frhead" markerWidth="9" markerHeight="7" refX="7.5" refY="3.5" orient="auto">
+            <path d="M0 0 L9 3.5 L0 7 Z" fill="#02b8cc"/>
+          </marker>
+        </defs>
+
+        <!-- arrows (length 116 each: gap 190 between centers, node r=32, +5 padding) -->
+        <line class="fr-arrow d1" x1="107" y1="58" x2="223" y2="58" marker-end="url(#frhead)"/>
+        <line class="fr-arrow d2" x1="297" y1="58" x2="413" y2="58" marker-end="url(#frhead)"/>
+        <line class="fr-arrow d3" x1="487" y1="58" x2="603" y2="58" marker-end="url(#frhead)"/>
+
+        <g>
+          <circle class="fr-node-bg" cx="70" cy="58" r="32"/>
+          <text class="fr-node-tx" x="70" y="58" font-size="12" text-anchor="middle" dominant-baseline="central">hooks</text>
+          <text class="fr-cap" x="70" y="112" font-size="11" text-anchor="middle">native telemetry</text>
+        </g>
+        <g>
+          <circle class="fr-node-bg" cx="260" cy="58" r="32"/>
+          <text class="fr-node-tx" x="260" y="58" font-size="10.5" text-anchor="middle" dominant-baseline="central">analyzer.py</text>
+          <text class="fr-cap" x="260" y="112" font-size="11" text-anchor="middle">pattern classification</text>
+        </g>
+        <g>
+          <circle class="fr-node-bg" cx="450" cy="58" r="32"/>
+          <text class="fr-node-tx" x="450" y="52" font-size="11" text-anchor="middle">28-day</text>
+          <text class="fr-node-tx" x="450" y="66" font-size="11" text-anchor="middle">window</text>
+          <text class="fr-cap" x="450" y="112" font-size="11" text-anchor="middle">cross-session aggregation</text>
+        </g>
+        <g>
+          <circle class="fr-node-bg" cx="640" cy="58" r="32" stroke="url(#frgrad)"/>
+          <text class="fr-node-tx" x="640" y="52" font-size="9.5" text-anchor="middle" fill="#99a2f2">/forge-</text>
+          <text class="fr-node-tx" x="640" y="65" font-size="9.5" text-anchor="middle" fill="#99a2f2">friction</text>
+          <text class="fr-cap" x="640" y="112" font-size="11" text-anchor="middle">surfaced at 3+ sessions</text>
+        </g>
+      </svg>
+    </div>
+
+    <p class="friction__privacy" role="note">
+      <span aria-hidden="true">🔒</span>
+      <span><strong>Your data never leaves the machine.</strong> All telemetry lives in <code>~/.claude/agent-framework/</code> — only aggregated pattern signatures persist across sessions. No uploads, no accounts, no exceptions.</span>
+    </p>
+  </div>
+</section>
+
+<!-- ===================== Install ===================== -->
+<section class="section elevated-field" id="install" aria-labelledby="install-heading">
+  <div class="container">
+    <span class="label">Install</span>
+    <h2 class="section__title" id="install-heading">Add it in about 30 seconds.</h2>
+    <div class="install__meta">
+      <span class="install__version">v1.5.1</span>
+      <span class="install__req">Requires Claude Code v1.0.33+ · Apache-2.0 · free</span>
+    </div>
+
+    <div class="install__blocks">
+      <div>
+        <p class="block__label">Marketplace</p>
+        <div class="code">
+          <div class="code__bar" aria-hidden="true"><span></span><span></span><span></span></div>
+          <pre id="cmd-marketplace" tabindex="0" aria-label="Marketplace install commands"><code><span class="tok">/plugin</span> marketplace add griffinwork40/agent-framework
+<span class="tok">/plugin</span> install agent-workflow-amplifiers@griffinwork40-agent-framework
+<span class="tok">/reload-plugins</span></code></pre>
+          <button type="button" class="copy-btn" data-target="cmd-marketplace" aria-label="Copy marketplace install commands">Copy</button>
+        </div>
+      </div>
+
+      <div>
+        <p class="block__label">Local</p>
+        <div class="code">
+          <div class="code__bar" aria-hidden="true"><span></span><span></span><span></span></div>
+          <pre id="cmd-local" tabindex="0" aria-label="Local install commands"><code><span class="dim">git</span> clone https://github.com/griffinwork40/agent-framework.git
+<span class="dim">claude</span> --plugin-dir ./agent-framework</code></pre>
+          <button type="button" class="copy-btn" data-target="cmd-local" aria-label="Copy local install commands">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- earned-path :: rise to the surface — many passes resolved into one confident route,
+     delivering into the warmest, most embodied zone of the page (the final CTA) -->
+<div class="earned-path earned-path--resolve" aria-hidden="true" data-reveal>
+  <svg viewBox="0 0 1000 92" preserveAspectRatio="none">
+    <path class="strand" d="M210 0 C210 44 500 54 500 92"/>
+    <path class="strand" d="M380 0 C380 48 500 56 500 92"/>
+    <path class="strand" d="M620 0 C620 48 500 56 500 92"/>
+    <path class="strand" d="M790 0 C790 44 500 54 500 92"/>
+    <path class="strand strand--main" d="M500 0 L500 92"/>
+    <circle class="node" cx="500" cy="89" r="3.4"/>
+  </svg>
+  <span class="earned-path__mark">△ 000</span>
+</div>
+
+<!-- ===================== Final CTA ===================== -->
+<section class="cta-final elevated-field" aria-labelledby="cta-heading">
+  <div class="container cta-final__inner">
+    <h2 class="section__title" id="cta-heading">Small prompts. <span class="grad-text">Disproportionate</span> results.</h2>
+    <p class="cta-final__sub">13 skills. One install. Works with the Claude Code you already run.</p>
+    <div class="hero__ctas cta-final__ctas">
+      <a href="#install" class="btn btn--primary btn--lg" data-copy-install>Copy install command →</a>
+      <a class="hero__ghost" href="https://github.com/griffinwork40/agent-framework" target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ===================== Footer ===================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <p class="footer__copy">Apache-2.0 · Built by Griffin Long / Graisol · Made for Claude Code</p>
+      <nav class="footer__links" aria-label="Footer">
+        <a href="https://github.com/griffinwork40/agent-framework" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://graisol.com" target="_blank" rel="noopener noreferrer">graisol.com</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+  // Toast helper
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.innerHTML = '<span class="toast__check" aria-hidden="true">✓</span>' + msg;
+    t.classList.add('is-shown');
+    clearTimeout(t._hideTimer);
+    t._hideTimer = setTimeout(function () { t.classList.remove('is-shown'); }, 2400);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        resolve();
+      } catch (e) { reject(e); }
+    });
+  }
+
+  // Code-block copy buttons
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.getAttribute('data-target'));
+      if (!target) return;
+      var text = (target.textContent || '').trim();
+      copyText(text).then(function () {
+        btn.textContent = 'Copied';
+        btn.classList.add('is-copied');
+        setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('is-copied'); }, 1800);
+      }).catch(function () {});
+    });
+  });
+
+  // Primary CTAs: copy the marketplace command, confirm, then scroll to install.
+  // Progressive enhancement — with JS off, the anchor's href="#install" still works.
+  function scrollToInstall() {
+    var el = document.getElementById('install');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.querySelectorAll('[data-copy-install]').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      var src = document.getElementById('cmd-marketplace');
+      var text = src ? (src.textContent || '').trim() : '';
+      if (!text) return; // fall back to the anchor jump
+      e.preventDefault();
+      copyText(text).then(function () {
+        showToast('Copied — paste into Claude Code');
+        scrollToInstall();
+      }).catch(function () { scrollToInstall(); });
+    });
+  });
+
+  // Progressive enhancement: show the GitHub star count only once it is meaningful (>=100).
+  fetch('https://api.github.com/repos/griffinwork40/agent-framework')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var el = document.getElementById('star-count');
+      if (el && d && typeof d.stargazers_count === 'number' && d.stargazers_count >= 100) {
+        el.textContent = d.stargazers_count.toLocaleString();
+      }
+    })
+    .catch(function () { /* leave empty */ });
+
+  // Earned-path reveal — each route draws itself as it enters the viewport, so the
+  // page's through-line clarifies the further you descend. Static if motion is reduced.
+  (function () {
+    var paths = document.querySelectorAll('.earned-path[data-reveal]');
+    if (!paths.length) return;
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window)) {
+      paths.forEach(function (p) { p.classList.add('is-revealed'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('is-revealed'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.35 });
+    paths.forEach(function (p) { io.observe(p); });
+  })();
+</script>
+
+</body>
+</html>

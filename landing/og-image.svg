@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Source of truth for og-image.png (no build step in this repo, so the SVG
+  source is committed alongside the rasterized PNG for reproducibility).
+  Regenerate with:  rsvg-convert -w 1200 -h 630 og-image.svg -o og-image.png
+-->
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5e6ad2"/>
+      <stop offset="1" stop-color="#02b8cc"/>
+    </linearGradient>
+    <radialGradient id="glowI" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#5e6ad2" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#5e6ad2" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowC" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#02b8cc" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#02b8cc" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+  </defs>
+
+  <!-- canvas -->
+  <rect width="1200" height="630" fill="#08090a"/>
+  <ellipse cx="250" cy="120" rx="520" ry="360" fill="url(#glowI)"/>
+  <ellipse cx="1010" cy="330" rx="430" ry="340" fill="url(#glowC)"/>
+  <rect width="1200" height="630" fill="none" stroke="#1c1d21" stroke-width="2"/>
+
+  <!-- left: text block -->
+  <text x="92" y="150" font-family="monospace" font-size="22" fill="#99a2f2" letter-spacing="1">agent-workflow-amplifiers</text>
+
+  <text x="90" y="266" font-family="sans-serif" font-size="66" font-weight="700" fill="#f7f8f8" letter-spacing="-2">Small prompts.</text>
+  <text x="90" y="344" font-family="sans-serif" font-size="66" font-weight="700" fill="url(#grad)" letter-spacing="-2">Disproportionate</text>
+  <text x="90" y="422" font-family="sans-serif" font-size="66" font-weight="700" fill="#f7f8f8" letter-spacing="-2">workflow improvement.</text>
+
+  <text x="92" y="486" font-family="monospace" font-size="22" fill="#8a8f98">13 skills · parallel sub-agent dispatch · Claude Code</text>
+  <text x="92" y="582" font-family="monospace" font-size="18" fill="#62666d">github.com/griffinwork40/agent-framework</text>
+
+  <!-- right: fan-out → parallel → converge motif (1 → 3 → 1) -->
+  <g stroke-linecap="round">
+    <!-- dispatch lines (indigo) -->
+    <path d="M905 315 C 960 315, 980 188, 1035 188" stroke="#5e6ad2" stroke-width="3" fill="none"/>
+    <path d="M905 315 C 960 315, 980 315, 1035 315" stroke="#5e6ad2" stroke-width="3" fill="none"/>
+    <path d="M905 315 C 960 315, 980 442, 1035 442" stroke="#5e6ad2" stroke-width="3" fill="none"/>
+    <!-- converge lines (cyan) -->
+    <path d="M1075 188 C 1110 188, 1110 315, 1145 315" stroke="#02b8cc" stroke-width="3" fill="none"/>
+    <path d="M1075 315 C 1110 315, 1110 315, 1145 315" stroke="#02b8cc" stroke-width="3" fill="none"/>
+    <path d="M1075 442 C 1110 442, 1110 315, 1145 315" stroke="#02b8cc" stroke-width="3" fill="none"/>
+  </g>
+
+  <!-- node glows -->
+  <circle cx="890" cy="315" r="26" fill="#5e6ad2" filter="url(#soft)" opacity="0.7"/>
+  <circle cx="1160" cy="315" r="26" fill="#02b8cc" filter="url(#soft)" opacity="0.7"/>
+
+  <!-- source node -->
+  <circle cx="890" cy="315" r="15" fill="#0f1011" stroke="#5e6ad2" stroke-width="3"/>
+  <!-- parallel nodes -->
+  <circle cx="1055" cy="188" r="13" fill="#0f1011" stroke="#7e88e0" stroke-width="2.5"/>
+  <circle cx="1055" cy="315" r="13" fill="#0f1011" stroke="#7e88e0" stroke-width="2.5"/>
+  <circle cx="1055" cy="442" r="13" fill="#0f1011" stroke="#7e88e0" stroke-width="2.5"/>
+  <!-- converge node -->
+  <circle cx="1160" cy="315" r="16" fill="#0f1011" stroke="#02b8cc" stroke-width="3"/>
+  <circle cx="1160" cy="315" r="5" fill="#02b8cc"/>
+</svg>
