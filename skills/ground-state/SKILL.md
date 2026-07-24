@@ -4,7 +4,7 @@ description: "Before starting any non-trivial implementation (multi-file edits, 
 ---
 
 ## Sub-agent contract
-/agent-workflow-amplifiers:contract
+/contract
 
 Before any multi-step implementation (not single-file fixes, not pure Q&A), dispatch three parallel reconnaissance sub-agents, each with a narrow target:
 

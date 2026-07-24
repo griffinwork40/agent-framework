@@ -4,7 +4,7 @@ description: "Release pipeline for already-done local work. Dispatches /ground-s
 ---
 
 ## Sub-agent contract
-/agent-workflow-amplifiers:contract
+/contract
 
 Release pipeline for work that is **already done locally**. This skill does NOT build, implement, or fix — if the task needs code, or a bug needs diagnosis, remind the user to chose another skill. This skill's job is the hand-off from "done locally" to "visible in a PR."
 

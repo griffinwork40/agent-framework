@@ -45,7 +45,7 @@ python3 scripts/friction/analyzer.py
 | `scripts/friction/analyzer.py` | Reads Claude Code native telemetry → surfaces friction patterns |
 | `.github/workflows/` | `claude.yml`, `claude-code-review.yml`, `release-please.yml` |
 
-**Skill anatomy.** Most skills are a few lines of prompt that change the *shape* of the workflow — adding phases, parallelism, or sub-agent dispatch. Orchestrator skills (`integrate`, `research`, `web`, `resolve`, `agentify`) dispatch sub-agents and merge their output; each loads the I/O schema convention via `/agent-workflow-amplifiers:contract` (`skills/contract/SKILL.md`).
+**Skill anatomy.** Most skills are a few lines of prompt that change the *shape* of the workflow — adding phases, parallelism, or sub-agent dispatch. Orchestrator skills (`integrate`, `research`, `web`, `resolve`, `agentify`) dispatch sub-agents and merge their output; each loads the I/O schema convention via `/contract` (`skills/contract/SKILL.md`).
 
 ## Conventions
 

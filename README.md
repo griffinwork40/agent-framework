@@ -39,7 +39,7 @@ Every skill is a single `SKILL.md`. The `description` field controls when Claude
 | [`agentify`](skills/agentify/SKILL.md) | Bootstraps a dispatchable sub-agent skill for every coding agent CLI installed on the machine (codex, aider, cursor, etc.). |
 | [`appmap`](skills/appmap/SKILL.md) | Maps a web UI and generates a Claude skill to automate it via parallel orchestration. |
 | [`automate`](skills/automate/SKILL.md) | Sets up a cron/launchd job to run Claude headlessly and send results to Telegram. |
-| [`contract`](skills/contract/SKILL.md) | Reference convention for sub-agent I/O schemas. Loaded by orchestrator skills via `/agent-workflow-amplifiers:contract` and into agents via `skills:` field. |
+| [`contract`](skills/contract/SKILL.md) | Reference convention for sub-agent I/O schemas. Loaded by orchestrator skills via `/contract` and into agents via `skills:` field. |
 | [`forge-friction`](skills/forge-friction/SKILL.md) | Surfaces recurring friction patterns detected across sessions and identifies actionable skill opportunities. |
 | [`ground-state`](skills/ground-state/SKILL.md) | Before any non-trivial implementation, dispatches a parallel recon wave (git + infrastructure + memory) that produces a 5-line ground-truth snapshot to prevent wrong-branch edits, assumed-no-CI, and missed memory context. |
 | [`integrate`](skills/integrate/SKILL.md) | One-prompt API integration pipeline. Any API (docs URL, name, or description) → working CLI wrapper + skill + tests. |

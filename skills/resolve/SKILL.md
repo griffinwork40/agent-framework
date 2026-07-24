@@ -4,7 +4,7 @@ description: "Resolves PR code review feedback. Use when the user asks to fix, a
 ---
 
 ## Sub-agent contract
-/agent-workflow-amplifiers:contract
+/contract
 
 Using parallel sub-agents – one per issue – for each of the issues pointed out in the PR review:
 

@@ -1,6 +1,6 @@
 ---
 name: contract
-description: "Reference convention for sub-agent I/O schemas. Loaded by orchestrator skills via /agent-workflow-amplifiers:contract and into agents (e.g., qualify) via the `skills:` field."
+description: "Reference convention for sub-agent I/O schemas. Loaded by orchestrator skills via /contract and into agents (e.g., qualify) via the `skills:` field."
 ---
 
 # Contract

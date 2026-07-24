@@ -22,7 +22,7 @@ skills/
   agentify/SKILL.md            # Bootstraps sub-agent skills for each locally-installed coding agent CLI
   appmap/SKILL.md              # Map a web UI → create a Claude skill to automate it
   automate/SKILL.md            # Cron/launchd-driven headless Claude runs → Telegram summaries
-  contract/SKILL.md            # Sub-agent I/O schema reference (loaded by orchestrator skills via /agent-workflow-amplifiers:contract; also preloaded into agents via `skills:` field)
+  contract/SKILL.md            # Sub-agent I/O schema reference (loaded by orchestrator skills via /contract; also preloaded into agents via `skills:` field)
   forge-friction/SKILL.md      # Surface friction patterns and identify actionable skill opportunities
   ground-state/SKILL.md        # Pre-implementation recon wave (git + infra + memory) → 5-line ground-truth snapshot
   integrate/SKILL.md           # API docs → CLI wrapper + skill + tests pipeline
@@ -49,7 +49,7 @@ Versioning is automated by **release-please** (`.github/workflows/release-please
 
 - A skill must **change workflow shape**, **unlock existing agent capabilities**, or **materially improve one-shot completion**. Mere reminders or generic advice don't qualify.
 - Skills should be compact — high leverage per token. The `description` field controls when Claude auto-invokes the skill, so it must be specific.
-- Skills that orchestrate sub-agents (`integrate`, `research`, `web`, `resolve`, `agentify`) should clearly define what each sub-agent does and how results merge. Each includes `## Sub-agent contract\n/agent-workflow-amplifiers:contract` which loads `skills/contract/SKILL.md` into context at invocation time.
+- Skills that orchestrate sub-agents (`integrate`, `research`, `web`, `resolve`, `agentify`) should clearly define what each sub-agent does and how results merge. Each includes `## Sub-agent contract\n/contract` which loads `skills/contract/SKILL.md` into context at invocation time.
 - Run proposed skills through the `qualify` agent before adding them. See [`agents/qualify.md`](agents/qualify.md) for the rubric and decision thresholds.
 
 ## How Skills & Agents Are Invoked

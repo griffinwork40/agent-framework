@@ -4,7 +4,7 @@ description: "Orchestrates parallel browser automation by dispatching sub-agents
 ---
 
 ## Sub-agent contract
-/agent-workflow-amplifiers:contract
+/contract
 
 **EXPERIMENTAL — requires a running MCP-compatible browser tab server.**
 
