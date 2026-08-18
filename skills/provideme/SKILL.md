@@ -5,7 +5,7 @@ argument-hint: "<CLI name, docs URL, or install steps>"
 ---
 
 ## Sub-agent contract
-!`awk ‘/^---$/{c++; next} c>=2’ "${CLAUDE_SKILL_DIR}/../contract/SKILL.md"`
+/contract
 
 Dispatch parallel sub-agents:
 1. **Research agent**: investigate the $ARGUMENT provider CLI — installation, invocation syntax, streaming support, output format, authentication/config requirements.
