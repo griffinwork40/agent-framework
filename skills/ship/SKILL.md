@@ -1,12 +1,13 @@
 ---
 name: ship
-description: "Release pipeline for already-done local work. Dispatches /ground-state pre-flight, runs the project test suite, drafts a commit message for user approval, pushes, and opens a PR with a structured verification summary. Use when local changes are ready to hand off to review — e.g. 'ship this', 'push and open a PR', 'release this work'. Add --verify to trigger an adversarial verifier wave on the diff before a human reads the PR."
+description: "Release pipeline for already-done local work. Dispatches /ground-state pre-flight, runs the project test suite, drafts a commit message, pushes, and opens a PR with a structured verification summary. Use when local changes are ready to hand off to review — e.g. 'ship this', 'push and open a PR', 'release this work'. Add --verify to trigger an adversarial verifier wave on the diff before a human reads the PR."
+context: fork
 ---
 
 ## Sub-agent contract
 /contract
 
-Release pipeline for work that is **already done locally**. This skill does NOT build, implement, or fix — if the task needs code, or a bug needs diagnosis, remind the user to chose another skill. This skill's job is the hand-off from "done locally" to "visible in a PR."
+Release pipeline for work that is **already done locally**. This skill does NOT build, implement, or fix — if the task needs code, route to `/mint`; if a bug needs diagnosis, route to `/diagnose`. This skill's job is the hand-off from "done locally" to "visible in a PR."
 
 **Skip when:**
 - Working tree is clean (nothing to ship — tell the user).
@@ -20,8 +21,18 @@ Release pipeline for work that is **already done locally**. This skill does NOT 
 
 ---
 
-**Phase 1 — Pre-flight (mandatory).**
-Invoke `agent-workflow-amplifiers:ground-state` via the Skill tool. Abort and surface the blocker with remediation steps if ground-state reports any of:
+**Hard rules (non-negotiable — these override any inferred convention):**
+
+- **Branch lock.** Whatever branch is checked out when `/ship` starts is the only branch you may commit and push from. **NEVER** `git checkout` to a different branch during this skill — not to `main`, not to `master`, not to a sibling feature branch. If pre-flight finds you on the default branch, abort. Do not "recover" by switching branches yourself.
+- **Never push to the default branch.** Phase 5 pushes the CURRENT (feature) branch. Phase 8 opens a PR. There is no path through this skill that pushes to `main`/`master` or merges without a PR. If you find yourself about to run `git push origin main` (or equivalent), stop.
+- **User intent is absolute.** If the user said "make a PR," "open a PR," "submit for review," or anything synonymous, you MUST complete Phase 8. "Ship" / "release" alone also implies PR — there is no interpretation under which `/ship` means "skip the PR step."
+- **Do not invent project convention.** Never assert "this project uses direct-to-main flow," "this repo merges direct," or any equivalent justification for bypassing the PR step. If you genuinely cannot tell whether the project uses PRs, run `gh pr list --state merged --limit 5`; ≥3 merged PRs in the last week ⇒ PR is the convention. If still ambiguous, ask the user. Default to PR — it is the safer choice.
+- **Anchor cwd.** When `/ship` is invoked, `pwd` at that moment is the only working directory you operate in. All git commands and file reads must run inside that directory — never `cd` to a sibling worktree, the parent repo, or any other path during this skill. If you find yourself reading state from a path other than the invocation cwd (e.g. `git log` returning unrelated commits, or a file diff that doesn't match what was just edited), stop and re-anchor on the original cwd. Worktrees and sibling repos look almost identical; cwd is the only disambiguator.
+
+---
+
+**Phase 1 — Pre-flight (mandatory, runs BEFORE any git mutation).**
+Invoke `ground-state` via the Skill tool. Abort and surface the blocker with remediation steps if ground-state reports any of:
 - Uncommitted changes in files unrelated to the declared scope
 - Branch behind `origin/<default>` (stale — user needs to rebase/merge first)
 - Current branch IS the default branch
@@ -39,31 +50,33 @@ If found → run it. Non-zero exit → **abort**; surface the failing output and
 
 If no harness detected → **warn the user:** "No test harness detected. Ship without running tests?" Require explicit yes. Do not silently skip.
 
-**Phase 3 — Draft commit message (user-approval gate).**
+**Phase 3 — Draft commit message.**
 Read the cumulative diff: `git diff --stat origin/<default>...HEAD` + full `git diff`. Synthesize a commit message:
 - **Subject (≤70 chars):** imperative, Conventional Commits format (`feat`, `fix`, `chore`, `refactor`, `docs`, etc.)
 - **Body:** 2–5 bullets on WHY — the motivation, constraint, or trade-off. Skip the WHAT — the diff speaks for itself.
 
-Before committing, confirm the **file list** to stage with the user — don't sweep in untracked config/scratch/secret files. Surface the draft message + file list; wait for explicit approval. If the user edits the message, use the edited version.
+Before committing, review the **file list** to stage — don't sweep in untracked config/scratch/secret files. Print the draft message + file list to the user as info-only output, then **immediately** invoke Phase 4. **This is not a gate. Do not ask "does this look good?" Do not wait for approval.** The user surface is one continuous turn: draft → commit → push → PR URL.
 
 **Phase 4 — Commit.**
-Stage only the confirmed files. Commit via HEREDOC to preserve formatting:
+Stage only the confirmed files, then write the commit message to a temp file with your file-writing tool — **NOT** a shell heredoc — and commit with `-F`:
 
 ```
-git commit -m "$(cat <<'EOF'
-<subject>
-
-<body>
-EOF
-)"
+# 1. Write the subject + body to a temp file (e.g. .git/COMMIT_BODY.txt) using
+#    your file-writing tool. The content never passes through the shell.
+# 2. Commit from that file:
+git commit -F .git/COMMIT_BODY.txt
 ```
+
+Going through a file keeps backticks, `$(...)`, and quotes in the message literal. **Never** assemble the message inline as `git commit -m "$(cat <<'EOF' … EOF)"` — a backtick or `$(` in the body is parsed by the shell *before* `git` runs, so the commit fails or records a mangled message. `.git/` is never staged, so the temp file can't sneak into the commit (in a linked worktree `.git` is a file, not a dir — write to the path printed by `git rev-parse --git-dir` instead).
 
 Never `--amend` (creates a new commit each time). Never bypass hooks (`--no-verify`).
 
 **Phase 5 — Push.**
+- **Assertion (before any push):** `git rev-parse --abbrev-ref HEAD` must NOT equal the default branch. If it does, abort with the same error as Phase 1 — Branch lock was violated somewhere upstream.
 - Upstream unset → `git push -u origin <branch>`
 - Upstream set → `git push`
 - Non-fast-forward rejection → **abort**; do not force-push. Surface and let the user decide.
+- **Never** `git push origin main` (or `master`). Pushing the feature branch is the only allowed form.
 
 **Phase 6 — Optional adversarial verifier wave.**
 Trigger when `$ARGUMENT` contains `--verify`, OR when the cumulative diff exceeds **100 changed lines** (rough proxy for "big enough that a human reviewer will miss something"). Skip for diffs under 100 lines unless `--verify` is explicit.
@@ -95,18 +108,34 @@ Structure:
 ```
 
 **Phase 8 — Open PR.**
+Write the PR body (from Phase 7) to a temp file with your file-writing tool — **NOT** a shell heredoc — then pass it with `--body-file`:
+
 ```
+# 1. Write the Phase 7 PR body to a temp file (e.g. .git/PR_BODY.md) using your
+#    file-writing tool. The body never passes through the shell.
+# 2. Open the PR from that file:
 gh pr create \
   --title "<subject line of the commit>" \
-  --body "$(cat <<'EOF'
-<PR body from Phase 7>
-EOF
-)" \
+  --body-file .git/PR_BODY.md \
   --base <default-branch> \
   [--draft]
 ```
 
-Return the PR URL to the user. Done.
+PR bodies are markdown: they routinely carry backticks (inline code), `$(...)`, and quotes. **Never** inline the body as `--body "$(cat <<'EOF' … EOF)"` — the shell parses backticks/`$(` inside the command substitution before `gh` ever runs, so the call fails (or worse, opens the PR with a truncated/garbled body and you don't notice). `--body-file` reads the file verbatim: no shell quoting, no escaping. Only `--title` stays inline — keep it a single plain line with no backticks.
+
+**Phase 9 — Reclaim the worktree.**
+Skip entirely unless the work you just shipped lives under `.afk-worktrees/` (check the invocation cwd from Phase 1 — if the path has no `.afk-worktrees/` segment, there is nothing to reclaim; go straight to the PR URL).
+
+A worktree is scaffolding, not an artifact. Once Phase 8 succeeds the branch is pushed and the PR holds the work, so the checkout has no remaining job. Do not leave it for the background sweep — the sweep never reaps a *locked* tree, and a preserved commits-ahead tree is exactly the kind that gets locked, so "the sweep will get it" is false for the common case.
+
+Two cases, and they behave differently:
+
+- **A worktree you (or a sub-agent) created for this work, that you are NOT currently inside** — reclaim it now, using the `worktree` tool rather than `git worktree` in bash. Two refusals to expect, in this order: a **locked** tree must be `release`d first (`remove` refuses a locked tree, so the order is mandatory, not stylistic), and a tree with **commits ahead of base** is refused unless you pass `force: true`. After a successful push that `force` is safe and correct: the tool never deletes the branch ref, so the commits remain on the branch *and* on the remote — you are discarding a directory, not history. Do not pass `force` before the push has landed.
+- **The worktree you are running in (your own cwd)** — **do not remove it.** Deleting your own working directory strands every subsequent tool call on a path that no longer exists, and `/ship` still has output to produce. Session-end cleanup already removes a clean worktree on exit. Say so instead, in one line: which branch carries the work, and that the checkout is reclaimed when the session ends.
+
+Never delete the branch as part of this phase — the open PR depends on that ref.
+
+Return the PR URL to the user, plus a one-line worktree disposition (`reclaimed <path>` / `preserved <path> — reclaimed at session end` / omit if not in a worktree). Done.
 
 ---
 
@@ -114,3 +143,4 @@ Return the PR URL to the user. Done.
 - `/ground-state` unavailable → skip Phase 1 with a loud warning; do not proceed silently.
 - `gh` CLI not authenticated → abort Phase 8 with the exact `gh auth login` command.
 - Detached HEAD or shallow clone → abort at Phase 1; these are edge cases `/ship` should not try to auto-recover.
+- Worktree reclaim fails in Phase 9 → the PR is already open and that is the deliverable; report the failure and the path, never retry-loop or walk back the PR.
