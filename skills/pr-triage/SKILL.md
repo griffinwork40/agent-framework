@@ -27,8 +27,8 @@ on every irreversible operation.
    (still sequential with CI check between each).
 2. **Reviews are read-only.** `/review` never posts to GitHub. This skill owns
    the decision of what to post and when.
-3. **Fix agents produce diffs, not pushes.** Dispatch `/fix-pr` with `--no-push`
-   so fixes land in kept worktrees for operator review before any branch push.
+3. **Fix agents push directly.** Dispatch `/fix-pr` (no `--no-push`) so fixes
+   are pushed to the PR branch immediately after passing the test gate.
 4. **Sequential merges only.** Never merge two PRs in parallel. After each merge,
    verify CI / build before proceeding to the next.
 5. **Rate-limit awareness.** Cap concurrent review dispatches at 5. For >5 PRs,
@@ -92,8 +92,7 @@ Classify each PR into exactly one bucket based on the review verdict:
 | Bucket | Criteria |
 |--------|----------|
 | **GREEN** | `Decision: MERGE` — zero blocking findings |
-| **BLOCKED** | `Decision: DO NOT MERGE` — has blocking findings that are fixable by `/fix-pr` (code issues, test gaps, missing checks) |
-| **FOLLOW-UP** | `Decision: DO NOT MERGE` — has blocking findings that need human judgment (architecture, design, scope questions) or are outside the PR's own code (upstream dependency, spec ambiguity) |
+| **BLOCKED** | `Decision: DO NOT MERGE` — has blocking findings. Dispatch `/fix-pr` to address them. |
 | **SKIP** | PR already merged/closed during review, or review failed/timed out |
 
 Present the triage table to the operator:
@@ -106,12 +105,11 @@ Present the triage table to the operator:
 | 101 | Fix auth timeout | 🟢 GREEN | 0 | Clean — 2 low, 1 nit |
 | 102 | Add dark mode | 🔴 BLOCKED | 2 high | Missing error handling in theme.ts:41, untested edge case |
 | 103 | Bump deps | 🟢 GREEN | 0 | Dep-bump, no issues |
-| 104 | Refactor auth | 🟡 FOLLOW-UP | 1 critical | API contract change needs design review |
+| 104 | Refactor auth | 🔴 BLOCKED | 1 critical | API contract change needs fix |
 
 ### Proposed actions:
 - **Merge:** #101, #103 (sequential, CI-gated)
-- **Fix:** #102 (dispatch /fix-pr --no-push, review diff before push)
-- **Issue (FOLLOW-UP):** #104 (create tracking issue with findings)
+- **Fix:** #102, #104 (dispatch /fix-pr, push after test gate)
 - **Issue (advisory):** #101 has 2 low findings, #103 has 1 nit — track after merge
 
 Awaiting your approval to proceed. Reply with:
@@ -128,8 +126,8 @@ triage table as the terminal artifact and report Done.
 
 ### Wave 2 — Execute Buckets (sequential, human-gated)
 
-Execute buckets in this order: Merge → Fix → Follow-up. Each bucket is a
-sequential sub-wave. Never overlap buckets.
+Execute buckets in this order: Merge → Fix. Each bucket is a sequential
+sub-wave. Never overlap buckets.
 
 #### 2A — Merge Green PRs
 
@@ -150,57 +148,26 @@ For each GREEN PR, **sequentially** (never parallel):
 
 #### 2B — Fix Blocked PRs
 
-For each BLOCKED PR, dispatch `/fix-pr` with `--no-push`:
+For each BLOCKED PR, dispatch `/fix-pr`:
 
-- If only 1 blocked PR: dispatch inline via `skill fix-pr <N> --no-push`
+- If only 1 blocked PR: dispatch inline via `skill fix-pr <N>`
 - If 2+ blocked PRs: dispatch in parallel via `compose`, each node calling
-  `skill fix-pr <N> --no-push`, worktree-isolated by `/fix-pr` internally.
+  `skill fix-pr <N>`, worktree-isolated by `/fix-pr` internally.
 - Max 3 concurrent fix agents (narrower than review wave — fixes are heavier).
 
-After all fix agents return, present results to operator:
+`/fix-pr` handles its own worktree creation, test gate, push, and cleanup.
+After all fix agents return, present results:
 
 ```
 ## Fix Results
 
-| # | Title | Status | Worktree | Summary |
-|---|-------|--------|----------|---------|
-| 102 | Add dark mode | ✅ Fixed | .afk-worktrees/pr102-fix | Added error handling + test |
-| 107 | Migrate config | ❌ Blocked | .afk-worktrees/pr107-fix | Needs upstream API change |
-
-Fixed PRs have changes in kept worktrees. To review and push:
-- `cd .afk-worktrees/pr102-fix && git diff HEAD~1`
-- Then confirm: "push 102" / "push all" / "discard"
+| # | Title | Status | Summary |
+|---|-------|--------|---------|
+| 102 | Add dark mode | ✅ Fixed + pushed | Added error handling + test |
+| 107 | Migrate config | ❌ Blocked | Needs upstream API change (worktree kept) |
 ```
 
-**Wait for operator approval** before pushing any fixes.
-
-On approval, for each approved fix:
-1. `cd` into the worktree
-2. `git push origin <head-branch>`
-3. Clean up: `worktree remove <name>`
-
-#### 2C — Create Follow-up Issues
-
-For each FOLLOW-UP PR, draft a GitHub issue body containing:
-- The review findings (blocking items only)
-- The PR link
-- A recommended next step
-
-Present all drafted issues to operator for approval before creating:
-
-```
-## Proposed Issues
-
-### Issue for PR #104 — Refactor auth
-**Title:** Review: API contract change in #104 needs design discussion
-**Body:** [preview of the issue body]
-
-Create these issues? (y/n/edit)
-```
-
-On approval: `gh issue create --title "..." --body-file <tmpfile>` for each.
-
-#### 2D — Track Advisory Findings from Merged GREEN PRs
+#### 2C — Track Advisory Findings from Merged GREEN PRs
 
 After merging GREEN PRs (Wave 2A), create tracking issues for any non-blocking
 findings (low, advisory, nit) that the review surfaced. These findings were not
@@ -216,7 +183,7 @@ For each GREEN PR with non-blocking findings, draft a GitHub issue:
   accepted at merge time.
 - **Labels:** if the repo has a `review-followup` or `tech-debt` label, apply it.
 
-Batch-present all drafted issues to the operator for approval (same gate as 2C):
+Batch-present all drafted issues to the operator for approval:
 
 ```
 ## Advisory Follow-ups from Merged PRs
@@ -233,8 +200,8 @@ Create these issues? (y/n/edit/skip)
 ```
 
 On approval: `gh issue create --title "..." --body-file <tmpfile>` for each.
-On "skip": omit without creating. Advisory issues are lower priority than
-FOLLOW-UP issues — the operator may reasonably skip all of them.
+On "skip": omit without creating. Advisory issues are optional — the operator
+may reasonably skip all of them.
 
 ### Wave 3 — Re-review Fixed PRs (conditional)
 
@@ -255,8 +222,7 @@ Report Done with a structured summary:
 | Action | PRs | Result |
 |--------|-----|--------|
 | Merged | #101, #103 | ✅ |
-| Fixed + pushed | #102 | ✅ (re-review: GREEN) |
-| Issue (follow-up) | #104 | gh#551 |
+| Fixed + pushed | #102, #104 | ✅ (re-review: GREEN) |
 | Issue (advisory) | #101, #103 | gh#552, gh#553 |
 | Skipped | — | — |
 | Still blocked | #107 | Needs upstream API change |
