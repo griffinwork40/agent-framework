@@ -14,7 +14,7 @@ If no friction sessions exist, tell the user there are no friction patterns in t
 
 If friction data exists, review the output. It contains friction categories **ranked by confidence, then frequency**, each with recent examples showing `friction_detail` (what went wrong) and `goal` (what the user was trying to do).
 
-Tool-error categories carry a failure-class suffix. `:timeout`, `:truncated`, and `:slow` are **high-confidence** — real, specific friction a skill can address — and rank first. `:plain` is the **low-confidence residue**: a fast non-zero exit the trace cannot distinguish from a benign result (a `grep` no-match, a `test` that exits 1). It ranks last and should be treated with skepticism.
+Tool-error categories carry a failure-class suffix. `:timeout`, `:truncated`, and `:slow` are **high-confidence** — real, specific friction a skill can address — and rank first. `:plain` is the **low-confidence residue**: a fast non-zero exit the trace cannot distinguish from a benign result (a `grep` no-match, a `test` that exits 1). It ranks last and should be treated with skepticism. `:unclassified` comes from agent-afk session facets, which count tool errors without a failure class; treat it exactly like `:plain`. Facets also supply each example's `goal`, joined to witness traces through the session ledger's `traceLabel`.
 
 ## Dry-run mode
 
@@ -44,10 +44,10 @@ Not all friction is fixable by a skill. Filter for themes where:
 - The same failure mode repeats across multiple sessions (not one-off issues)
 - A skill could change the agent's default behavior to avoid the friction
 - The fix is a workflow shape change, not a reminder or checklist
-- **Prefer high-confidence failure classes.** Pursue `:timeout` / `:truncated` / `:slow` categories first; they are real friction. Treat `:plain` categories as low-confidence — only pursue one if its `friction_detail` / `goal` examples make the recurring failure mode unmistakable.
+- **Prefer high-confidence failure classes.** Pursue `:timeout` / `:truncated` / `:slow` categories first; they are real friction. Treat `:plain` and `:unclassified` categories as low-confidence — only pursue one if its `friction_detail` / `goal` examples make the recurring failure mode unmistakable.
 
 **If `--auto` is present** in `$ARGUMENTS`:
-- Auto-forge only high-confidence themes. **Skip `:plain` tool-error categories** — without human review, auto-forging the low-confidence residue produces noise skills. Pursue `:timeout` / `:truncated` / `:slow` and non-tool-error categories that pass the filter.
+- Auto-forge only high-confidence themes. **Skip `:plain` and `:unclassified` tool-error categories** — without human review, auto-forging the low-confidence residue produces noise skills. Pursue `:timeout` / `:truncated` / `:slow` and non-tool-error categories that pass the filter.
 - For each actionable theme, immediately run `/forge` from this plugin, seeding it with: "Create a skill that addresses this recurring friction: [theme summary]. Examples: [2-3 friction_detail quotes]."
 - Chain the invocations sequentially (wait for forge + qualify to complete before starting the next one).
 - After each forge + qualify completes, log to telemetry (see telemetry format below).

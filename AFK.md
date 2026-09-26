@@ -4,15 +4,16 @@ System prompt for AFK sessions in this repository.
 
 ## What This Is
 
-A Claude Code plugin (`agent-workflow-amplifiers`, repo `agent-framework`) containing high-leverage **skills** and **agents** that improve multi-agent orchestration, API integration, parallel execution, and one-shot task completion. Installed via the `.claude-plugin/plugin.json` manifest. There is **no build step, no test suite, and no runtime dependency graph** — each skill is a single `SKILL.md` (YAML frontmatter + markdown body), and the only executable code is a Python friction analyzer.
+A Claude Code plugin (`agent-workflow-amplifiers`, repo `agent-framework`) containing high-leverage **skills** and **agents** that improve multi-agent orchestration, API integration, parallel execution, and one-shot task completion. Installed via the `.claude-plugin/plugin.json` manifest. There is **no build step and no runtime dependency graph** — each skill is a single `SKILL.md` (YAML frontmatter + markdown body), and the only executable code is a Python friction analyzer (tested with `python3 -m pytest scripts/friction`).
 
 ## Commands
 
 No `package.json`, `Makefile`, or compiler. Work happens through slash commands, the friction analyzer, and the release flow.
 
 ```bash
-# Friction analysis (reads ~/.claude telemetry, surfaces recurring patterns)
+# Friction analysis (reads agent-afk facets + witness traces, legacy ~/.claude usage-data)
 python3 scripts/friction/analyzer.py
+python3 -m pytest scripts/friction   # analyzer tests
 
 # Release: handled by release-please via conventional commits — no manual version bump.
 # Merging Conventional Commits to main opens/updates a release PR that bumps
@@ -42,7 +43,7 @@ python3 scripts/friction/analyzer.py
 | `agents/` | `qualify.md` (skill gate-keeper), `unqualify.md` (logged removal) |
 | `commands/` | `/qualify` and `/unqualify` slash-command dispatchers |
 | `hooks/hooks.json` | Plugin hooks (currently empty `{}`) |
-| `scripts/friction/analyzer.py` | Reads Claude Code native telemetry → surfaces friction patterns |
+| `scripts/friction/analyzer.py` | Merges agent-afk session facets (`afk_facets.py`), witness traces, and legacy Claude Code usage-data → ranked friction patterns |
 | `.github/workflows/` | `claude.yml`, `claude-code-review.yml`, `release-please.yml` |
 
 **Skill anatomy.** Most skills are a few lines of prompt that change the *shape* of the workflow — adding phases, parallelism, or sub-agent dispatch. Orchestrator skills (`integrate`, `research`, `web`, `resolve`, `agentify`) dispatch sub-agents and merge their output; each loads the I/O schema convention via `/contract` (`skills/contract/SKILL.md`).
