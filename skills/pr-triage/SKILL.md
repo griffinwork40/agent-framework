@@ -72,13 +72,12 @@ Proceeding to parallel review wave...
 
 ### Wave 1 — Parallel Review (subagent fan-out)
 
-Dispatch one `/review` invocation per PR, in parallel, using `compose`:
+Dispatch one `agent` call per PR, in parallel:
 
-- Each node: `skill review <pr-url>`
-- Model: `claude-sonnet-4-6`
-- Max tool rounds per node: 30
-- Node timeout: 180000ms (3 min per review)
-- Cap at 5 concurrent nodes. If >5 PRs, run sequential waves of 5.
+- Each call: `skill review <pr-url>`
+- Model: `claude-opus-5-5`
+- Cap at 5 concurrent agents. If >5 PRs, run sequential waves of 5 (dispatch the first batch, await all results, then dispatch the next batch).
+- These are read-only reviews — no `isolation: "worktree"` needed.
 
 **For each review result, extract:**
 - The `Decision: MERGE / DO NOT MERGE` verdict line
@@ -150,9 +149,9 @@ For each GREEN PR, **sequentially** (never parallel):
 
 For each BLOCKED PR, dispatch `/fix-pr`:
 
-- If only 1 blocked PR: dispatch inline via `skill fix-pr <N>`
-- If 2+ blocked PRs: dispatch in parallel via `compose`, each node calling
-  `skill fix-pr <N>`, worktree-isolated by `/fix-pr` internally.
+- If only 1 blocked PR: dispatch a single `agent` call: `skill fix-pr <N>`
+- If 2+ blocked PRs: dispatch parallel `agent` calls, each calling `skill fix-pr <N>`.
+  `/fix-pr` handles its own worktree creation internally, so no `isolation: "worktree"` is needed on the dispatch.
 - Max 3 concurrent fix agents (narrower than review wave — fixes are heavier).
 
 `/fix-pr` handles its own worktree creation, test gate, push, and cleanup.
