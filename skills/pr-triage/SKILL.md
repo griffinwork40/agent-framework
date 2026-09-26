@@ -75,8 +75,7 @@ Proceeding to parallel review wave...
 Dispatch one `agent` call per PR, in parallel:
 
 - Each call: `skill review <pr-url>`
-- Model: `claude-sonnet-4-6`
-- `max_tool_use_iterations: 30`
+- Model: `claude-opus-5-5`
 - Cap at 5 concurrent agents. If >5 PRs, run sequential waves of 5 (dispatch the first batch, await all results, then dispatch the next batch).
 - These are read-only reviews — no `isolation: "worktree"` needed.
 
