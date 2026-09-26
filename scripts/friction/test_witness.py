@@ -590,3 +590,32 @@ class TestForgeRanking:
         ])
         order = [c["category"] for c in out["friction_categories"]]
         assert order.index("closure:abort") < order.index("tool_error:bash:plain")
+
+
+class TestLongRunningToolsNotTimeouts:
+    """Subagent dispatches routinely exceed the bash thresholds; duration is not a timeout signal."""
+
+    def test_agent_long_duration_is_plain(self):
+        cat, _ = _base_module._categorize(
+            "tool_call", {"phase": "completed", "isError": True, "name": "agent", "durationMs": 400_000}
+        )
+        assert cat == "tool_error:agent:plain"
+
+    def test_compose_slow_is_plain(self):
+        cat, _ = _base_module._categorize(
+            "tool_call", {"phase": "completed", "isError": True, "name": "compose", "durationMs": 60_000}
+        )
+        assert cat == "tool_error:compose:plain"
+
+    def test_agent_truncated_still_truncated(self):
+        cat, _ = _base_module._categorize(
+            "tool_call",
+            {"phase": "completed", "isError": True, "name": "agent", "durationMs": 400_000, "truncated": True},
+        )
+        assert cat == "tool_error:agent:truncated"
+
+    def test_bash_timeout_unchanged(self):
+        cat, _ = _base_module._categorize(
+            "tool_call", {"phase": "completed", "isError": True, "name": "bash", "durationMs": 130_000}
+        )
+        assert cat == "tool_error:bash:timeout"
