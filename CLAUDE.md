@@ -36,7 +36,8 @@ hooks/
   hooks.json                   # Plugin hooks (currently empty)
 scripts/
   friction/
-    analyzer.py                # Reads Claude Code native telemetry to surface friction patterns
+    analyzer.py                # Ranks friction from agent-afk facets + witness traces (+ legacy Claude Code usage-data)
+    afk_facets.py              # agent-afk SessionFacet source; joins traces via the session ledger traceLabel
 ```
 
 There are no build steps, tests, or dependencies. Each skill is a single `SKILL.md` with YAML frontmatter (`name`, `description`, optional `argument-hint`) and a markdown body. Agents live under `agents/` and follow the same frontmatter convention plus optional `model:` and `skills:` fields.
