@@ -61,6 +61,10 @@ WITNESS_DIR = _resolve_witness_dir()
 PER_SESSION_CAP = 5
 TIMEOUT_MS = 120_000  # bash tool hard-timeout default; a non-zero return at/after this is ~certainly a timeout
 SLOW_MS = 30_000      # pathologically slow but the call still returned
+# Tools whose normal runtime exceeds the bash thresholds above (subagent dispatch,
+# waits on an external condition or a human).
+# Median failed agent/compose call observed at ~242 s, i.e. ordinary work, not a hang.
+LONG_RUNNING_TOOLS = frozenset({"agent", "compose", "skill", "wait_for", "ask_question"})
 
 
 def _error_subclass(p) -> str:
@@ -69,6 +73,10 @@ def _error_subclass(p) -> str:
     cannot separate from a benign non-zero exit — no exit code or command text is captured."""
     if p.get("truncated"):
         return "truncated"
+    if p.get("name") in LONG_RUNNING_TOOLS:
+        # A subagent dispatch routinely runs for minutes; its duration says nothing
+        # about a timeout, so it never earns the high-confidence duration classes.
+        return "plain"
     dur = p.get("durationMs") or 0
     if dur >= TIMEOUT_MS:
         return "timeout"
