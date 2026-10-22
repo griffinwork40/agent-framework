@@ -1,7 +1,7 @@
 {
   "name": "agent-workflow-amplifiers",
-  "description": "multi-agent orchestration, simplified.",
-  "version": "2.2.0",
+  "description": "7 high-leverage skills for agent-afk that aren't bundled in core.",
+  "version": "3.0.0",
   "author": {
     "name": "Griffin Long",
     "email": "support@graisol.com"
