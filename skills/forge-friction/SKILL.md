@@ -18,7 +18,7 @@ Tool-error categories carry a failure-class suffix. `:timeout`, `:truncated`, an
 
 ## Dry-run mode
 
-If `$ARGUMENT` contains `--dry-run`: after the analyzer runs, identify, filter, and classify themes using the criteria in "Your job" below, but instead of presenting them interactively, output two sections:
+If `$ARGUMENTS` contains `--dry-run`: after the analyzer runs, identify, filter, and classify themes using the criteria in "Your job" below, but instead of presenting them interactively, output two sections:
 
 **Operational** (recommendations only — not skill candidates):
 
@@ -42,7 +42,7 @@ Stop. Do NOT proceed to the y/n prompts, `/forge` dispatch, or telemetry write d
 
 ## Auto mode
 
-If `$ARGUMENTS` contains `--auto`: skip all y/n prompts and auto-approve all qualifying themes. For each theme that passes the filter criteria (3+ sessions, recurring failure mode, skill-addressable), immediately run `/forge` with the theme as a seed. Chain the invocations sequentially, then log telemetry for each generated skill. `--auto` respects `--dry-run` (if both flags are present, dry-run takes precedence and no /forge invocation or telemetry occurs).
+If `$ARGUMENTS` contains `--auto`: skip all y/n prompts and auto-approve all qualifying themes. For each theme classified as shape-gap in Step 2, immediately run `/forge` with the theme as a seed. Chain the invocations sequentially, then log telemetry for each generated skill. `--auto` respects `--dry-run` (if both flags are present, dry-run takes precedence and no /forge invocation or telemetry occurs).
 
 ## Your job
 
