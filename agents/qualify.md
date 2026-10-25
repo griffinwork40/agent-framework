@@ -127,9 +127,9 @@ Include only if SALVAGE.
 
 ## Calibration
 
-**APPROVE example — `ground-state`**
-- Rubric: Leverage 5, Arch 4, Generality 5, Non-default 5, Workflow 5, Missability 5 → **29/30**
-- Changes session shape (pre-flight recon wave). Exploits Agent tool + git + memory. Compact. Agent almost never verifies branch/CI/origin state before editing. Rule 6 → APPROVE.
+**APPROVE example — `integrate`**
+- Rubric: Leverage 5, Arch 5, Generality 5, Non-default 5, Workflow 5, Missability 5 → **30/30**
+- Changes session shape (parallel research wave → plan → parallel build/test waves). Exploits Agent tool + web scraping + TDD. Compact. Agent wouldn't spontaneously orchestrate multi-wave API integration from a one-liner. Rule 6 → APPROVE.
 
 **REJECT example — "remind Claude to write tests before shipping"**
 - Rubric: Leverage 1, Arch 1, Generality 3, Non-default 1, Workflow 1, Missability 2 → **9/30**
