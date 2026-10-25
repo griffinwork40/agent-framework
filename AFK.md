@@ -6,7 +6,9 @@ System prompt for AFK sessions in this repository.
 
 A plugin (`agent-workflow-amplifiers`, repo `agent-framework`) containing 7 high-leverage **skills** that complement agent-afk's bundled set. Focused on API integration, browser automation, friction detection, provider bridging, review resolution, and agent CLI bootstrapping. Installed via `.claude-plugin/plugin.json`. There is **no build step and no runtime dependency graph**: each skill is a single `SKILL.md` (YAML frontmatter + markdown body), and the only executable code is a Python friction analyzer.
 
-As of v3.0.0, 18 skills that duplicated agent-afk's bundled plugin were removed. Those skills ship with `npm i agent-afk`.
+`contract` is a shared primitive loaded by orchestrator skills via `/contract` — it is not a user-facing skill and is not counted in the 7.
+
+As of v3.0.0, 17 skills that duplicated agent-afk's bundled plugin were removed. Those skills ship with `npm i agent-afk`.
 
 ## Commands
 
