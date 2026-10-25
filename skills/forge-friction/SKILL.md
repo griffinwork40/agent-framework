@@ -32,7 +32,7 @@ If `$ARGUMENTS` contains `--dry-run`: after the analyzer runs, identify, filter,
 |---|---|---|
 | ... | N | "truncated quote 1"; "truncated quote 2" |
 
-One row per theme. Truncate each `friction_detail` to ~80 chars. Up to 3 examples per row (semicolon-separated in the cell). If no themes pass the filter in either table, print "No themes in lookback window."
+One row per theme. Truncate each `friction_detail` to ~80 chars. Up to 3 examples per row (semicolon-separated in the cell). If neither table has any rows, print "No themes in lookback window." If only one table is empty, omit that table's header and add a `(none)` row placeholder instead.
 
 After the table (or "no themes" line), print:
 
@@ -54,6 +54,8 @@ Not all friction is actionable. Filter for themes where:
 - The same failure mode repeats across multiple sessions (not one-off issues)
 - The failure mode is specific enough to act on (not a grab-bag of unrelated errors)
 - **Prefer high-confidence failure classes.** Pursue `:timeout` / `:truncated` / `:slow` categories first; they are real friction. Treat `:plain` and `:unclassified` categories as low-confidence — only pursue one if its `friction_detail` / `goal` examples make the recurring failure mode unmistakable.
+
+<!-- Note: two earlier filter bullets — "A skill could change the agent's default behavior" and "The fix is a workflow shape change" — were consolidated into Step 2 Classify (shape-gap indicators), where they fit more naturally as classification criteria rather than pre-filters. -->
 
 ### Step 2 — Classify
 
@@ -90,7 +92,7 @@ For each theme that passes the filter, classify it as **operational** or **shape
 
 **If `--auto` is not present** (interactive mode):
 
-1. **Operational themes first**: list each with its one-line recommendation. No y/n prompt — these are informational.
+1. **Operational themes first**: list each with its one-line recommendation (same `Category | Count | Recommendation` columns as dry-run). No y/n prompt — these are informational.
 
 2. **Shape-gap themes next**: for each, summarize it in one line with the count, then quote 2-3 representative `friction_detail` examples. Ask: "Generate a skill for this? (y/n)"
 
